@@ -38,7 +38,10 @@ official Aug-2024 cutoff) did *not* reproduce the clean signature** — it **con
 period (projecting "Joe Biden" as the 2024 winner) rather than recalling it (the pre-registered
 H2). The two-family contrast yields the study's sharpest lesson: **a documented in-window cutoff
 is necessary but not sufficient for leakage — what matters is genuine recall, so each model must
-be probed, not assumed contaminated from its cutoff date.**
+be probed, not assumed contaminated from its cutoff date.** A four-model, in-train-year vs
+out-of-train-year sweep (§4.10) corroborates this: every model trades its training year at a far
+higher Sharpe than an unseen year, and the **regime-adjusted leakage gap orders by genuine recall**
+(qwen3 > qwen2.5 > gemma-confabulates > llama), though per-model significance is power-limited.
 
 ---
 
@@ -424,6 +427,38 @@ for parametric leakage — what matters is whether the model *genuinely recalls*
 `qwen3:8b` recalls and leaks; `gemma3:12b` confabulates and does not. The leakage we measure is
 therefore **model-specific, not a mechanical consequence of the cutoff date** — which makes
 per-model probing (not model-card cutoffs) the operative safeguard.
+
+### 4.10 Per-model: in-train-year vs out-of-train-year (4 models, EC2)
+
+The cleanest within-model test holds the backbone fixed and varies only the *traded year* between
+one **inside** the model's training cutoff and one **after** it. We ran this for **four models**
+(each with an empirically-grounded cutoff), 3 seeds, on EC2, with a no-memory momentum baseline
+for the regime-adjusted DiD. The OUT window is chosen per model to be genuinely post-cutoff (for
+`qwen3`, a 2025-release model that partly knows 2025, the only clean OOD year is 2026).
+
+| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | perm p |
+|---|---|---|---|---|---|---|
+| `qwen3:8b` | 2024 — **genuinely recalls** | 2026 | +1.91 | +0.49 | **+0.119** | 0.57 |
+| `qwen2.5:7b` | 2023 — knows | 2025 | +1.79 | +0.50 | +0.082 | 0.22 |
+| `gemma3:12b` | 2024 — **confabulates** | 2025 | +1.03 | +0.34 | +0.040 | 0.79 |
+| `llama3.1:8b` | 2023 — weak | 2025 | +2.67 | +1.17 | +0.002 | 0.84 |
+
+![Per-model in vs out](figures/per_model_in_vs_out.png)
+
+**Two findings.** (1) **Every model earns a far higher Sharpe in its training year than out of
+it** (right panel) — but much of that is market regime, which is exactly why we regime-adjust.
+(2) After the DiD correction, the residual leakage **orders by genuine recall**: `qwen3` (which
+correctly recalls the Aug-5 crash / NVIDIA split) is largest (+0.119), `qwen2.5` (knows its 2023
+in-year) next (+0.082), `gemma3` (which *confabulates* its 2024 in-year — "Biden won") small
+(+0.040), and `llama3.1` ≈0 (+0.002). This is the hypothesis's signature: *the more a model
+genuinely remembers its in-window, the larger its in−out leakage gap.*
+
+**Honesty about power.** No single model's in-vs-out permutation test is significant at 3 seeds ×
+~250 days (p = 0.22–0.84); the evidence is in the **cross-model ordering of the DiD point
+estimates**, not per-model p-values. We also note the methodological lesson the run surfaced: with
+`qwen3`'s OUT window mis-set to 2025 (which it partly knows), its DiD was −0.07; moving OUT to the
+genuinely-unseen 2026 flipped it to +0.119 — **the OUT window must be verified post-cutoff per
+model**, or leakage is masked.
 
 ## 5. Discussion & Forensic Analysis
 

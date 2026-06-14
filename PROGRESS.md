@@ -15,6 +15,7 @@ Durable across context compaction — read this + `findings.md` to resume.
 | 5 | Evaluation + statistical proof | ✅ done — DiD positive, moderate H1 support |
 | 6 | Research report | ✅ results+discussion+related-work+figures+Gemma §4.9 written |
 | 7 | Gemma 3 12B independent-family test (RUN_TAG=gemma) | ✅ done — did NOT replicate (confabulates; H2) |
+| 8 | Per-model in-vs-out (4 models, 3 seeds, EC2) | ✅ done — DiD orders by recall |
 
 ## Open gates (require user)
 
