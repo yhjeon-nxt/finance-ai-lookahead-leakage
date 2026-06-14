@@ -35,33 +35,46 @@ class LLMClient:
 class OllamaClient(LLMClient):
     """Local open-source model via ollama. Used for the actual experiment groups."""
 
-    def __init__(self, model: str, host: str | None = None, num_predict: int = 512):
+    def __init__(self, model: str, host: str | None = None, num_predict: int = 700):
         self.model = model
         self.name = model
         self.num_predict = num_predict
         self._host = host
+        # Reasoning ("thinking") models must have thinking disabled, else format=json yields
+        # empty output (the token budget is spent on suppressed <think> tokens). Detected once.
+        self._supports_think = any(k in model.lower() for k in ("qwen3", "deepseek-r1", "r1"))
 
     def complete(self, system: str, user: str, *, temperature: float, seed: int) -> LLMResponse:
         import ollama  # imported lazily so the package isn't required for mock runs
 
         client = ollama.Client(host=self._host) if self._host else ollama
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        options = {"temperature": temperature, "seed": seed, "num_predict": self.num_predict}
+
+        def _call(with_think: bool):
+            kw = dict(model=self.model, messages=messages, format="json", options=options)
+            if with_think:
+                kw["think"] = False  # disable reasoning so JSON is actually emitted
+            return client.chat(**kw)["message"]["content"]
+
         try:
-            resp = client.chat(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                format="json",
-                options={
-                    "temperature": temperature,
-                    "seed": seed,
-                    "num_predict": self.num_predict,
-                },
-            )
-            return LLMResponse(text=resp["message"]["content"], model=self.model)
-        except Exception as e:  # noqa: BLE001 - surfaced to caller for retry/logging
-            return LLMResponse(text="", model=self.model, ok=False, error=f"{type(e).__name__}: {e}")
+            text = _call(with_think=self._supports_think)
+            if not text.strip() and self._supports_think:
+                # Some builds ignore think kwarg; fall back to a /no_think prompt nudge.
+                messages[-1]["content"] += "\n/no_think"
+                text = _call(with_think=False)
+            return LLMResponse(text=text, model=self.model)
+        except Exception as e:  # noqa: BLE001
+            # Retry once without the think kwarg (models that don't accept it).
+            try:
+                text = _call(with_think=False)
+                return LLMResponse(text=text, model=self.model)
+            except Exception as e2:  # noqa: BLE001
+                return LLMResponse(text="", model=self.model, ok=False,
+                                   error=f"{type(e2).__name__}: {e2}")
 
 
 class MockClient(LLMClient):
