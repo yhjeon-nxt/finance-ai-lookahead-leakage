@@ -34,9 +34,15 @@ PROBES = [
 
 def _ask(model: str, question: str) -> str:
     import ollama
+    # Disable reasoning for thinking models so we get the factual answer, not <think> tokens.
+    think_model = any(k in model.lower() for k in ("qwen3", "deepseek-r1", "r1"))
+    kw = dict(model=model, messages=[{"role": "user", "content": question}],
+              options={"temperature": 0.0, "num_predict": 300})
     try:
-        r = ollama.chat(model=model, messages=[{"role": "user", "content": question}],
-                        options={"temperature": 0.0, "num_predict": 200})
+        try:
+            r = ollama.chat(**({**kw, "think": False} if think_model else kw))
+        except Exception:  # noqa: BLE001 - model may not accept think kwarg
+            r = ollama.chat(**kw)
         return r["message"]["content"].strip()
     except Exception as e:  # noqa: BLE001
         return f"[error: {type(e).__name__}: {e}]"

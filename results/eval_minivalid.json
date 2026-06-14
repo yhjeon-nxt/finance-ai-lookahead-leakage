@@ -1,0 +1,145 @@
+{
+  "tag": "minivalid",
+  "groups": {
+    "C-A": {
+      "model": "llama3.1:8b",
+      "financial": {
+        "total_return": 0.02625043408636696,
+        "ann_return": 4.116362310729262,
+        "ann_vol": 0.10583918792370457,
+        "sharpe": 15.51329343431464,
+        "max_drawdown": 0.0,
+        "n_days": 4.0,
+        "turnover": 0.58
+      },
+      "prescience": {
+        "ticker_prescience": -0.35109964079814665,
+        "exposure_timing": 0.7091309537370283,
+        "conf_weighted_timing": 0.7091309537370284
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": -0.03499999999999992,
+        "us_election_trump_trade": 0.03499999999999992,
+        "event_timing_mean": 0.0
+      },
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "correction": 1,
+          "volatility": 4
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "C-B": {
+      "model": "qwen3:8b",
+      "financial": {
+        "total_return": 0.003518655424714634,
+        "ann_return": 0.24768047150171757,
+        "ann_vol": 0.20518656638082536,
+        "sharpe": 1.155249909369833,
+        "max_drawdown": -0.01602821295671264,
+        "n_days": 4.0,
+        "turnover": 0.9833333333333334
+      },
+      "prescience": {
+        "ticker_prescience": -0.4269669027943655,
+        "exposure_timing": 0.8729266939091215,
+        "conf_weighted_timing": 0.872926693909121
+      },
+      "pre_event_timing": {},
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 4
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "T-in": {
+      "model": "qwen3:8b",
+      "financial": {
+        "total_return": 0.052353735320571415,
+        "ann_return": 23.899467316971247,
+        "ann_vol": 0.23263888438857735,
+        "sharpe": 13.993711716435197,
+        "max_drawdown": -0.00203851726157811,
+        "n_days": 4.0,
+        "turnover": 1.1166666666666667
+      },
+      "prescience": {
+        "ticker_prescience": -0.3865905175600581,
+        "exposure_timing": -0.20236368989035736,
+        "conf_weighted_timing": -0.20236368989035664
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.04999999999999993,
+        "us_election_trump_trade": -0.04999999999999993,
+        "event_timing_mean": 0.0
+      },
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 4
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    }
+  },
+  "comparisons": {
+    "T-in_vs_C-A": {
+      "T-in_timing_prescience": {
+        "point": -0.20236368989035736,
+        "lo": -0.20236368989035736,
+        "hi": -0.20236368989035736,
+        "p_gt_0": 1.0,
+        "n": 4
+      },
+      "C-A_timing_prescience": {
+        "point": 0.7091309537370282,
+        "lo": 0.7091309537370282,
+        "hi": 0.7091309537370283,
+        "p_gt_0": 0.0,
+        "n": 4
+      },
+      "permutation_diff": {
+        "diff": -0.9114946436273855,
+        "p_value": 0.3739252149570086
+      }
+    },
+    "T-in_vs_C-B": {
+      "T-in_timing_prescience": {
+        "point": -0.20236368989035736,
+        "lo": -0.20236368989035736,
+        "hi": -0.20236368989035736,
+        "p_gt_0": 1.0,
+        "n": 4
+      },
+      "C-B_timing_prescience": {
+        "point": 0.8729266939091213,
+        "lo": 0.8729266939091213,
+        "hi": 0.8729266939091214,
+        "p_gt_0": 0.0,
+        "n": 4
+      },
+      "permutation_diff": {
+        "diff": -1.0752903837994787,
+        "p_value": 0.26034793041391724
+      }
+    }
+  },
+  "foresight_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": 0.04037638523430742,
+    "gap_exposure_timing": -1.0752903837994787,
+    "gap_conf_weighted_timing": -1.0752903837994776
+  }
+}

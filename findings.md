@@ -26,6 +26,18 @@ chronological split of the *inputs* does not fix this; the future is in the weig
 exactly the gap this project isolates. Class consensus architecture = ReAct + Reflection +
 structured output (tool use 8/8, reflection 6/8, ReAct 5/8) → confirms my minimal-agent design.
 
+## Engineering findings (real models, local validation)
+
+- **qwen3:8b is a *thinking* model.** With `format=json` + default thinking it returns EMPTY
+  output (the token budget is spent on suppressed `<think>` tokens). Fix: pass `think=False`
+  (ollama). Then it emits valid JSON in ~7s. llama3.1:8b has no thinking mode. → `OllamaClient`
+  auto-detects qwen3/r1 and disables thinking; `cutoff_probe` does the same. **Report footnote:
+  model inference config is itself a reproducibility hazard for LLM-agent backtests.**
+- **Speed (Apple Silicon, this Mac):** ~6–8s / decision for 8B. Full run ≈ 3 groups × ~118 avg
+  decision-days × 3 seeds ≈ 1065 calls ≈ ~2.2 h locally, $0. EC2 g5 spot would be faster but
+  costs ~$1–2 + setup. → present as the gate choice.
+- **Cache bug fixed:** decision cache now keyed by client name (mock vs real never collide).
+
 ## Decisions / pivots
 
 - 2026-06-14: API → local open models (ollama) for a *real* cutoff gap, zero API cost.

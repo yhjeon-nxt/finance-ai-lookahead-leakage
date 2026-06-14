@@ -53,8 +53,10 @@ def _close_frame(group: Group) -> pd.DataFrame:
     return close[UNIVERSE].sort_index()
 
 
-def _cache_file(group: Group, seed: int) -> Path:
-    return DECISIONS_DIR / f"{group.name}_{group.model.tag.replace(':', '-')}_seed{seed}.jsonl"
+def _cache_file(group: Group, seed: int, client_name: str) -> Path:
+    # Cache key includes the client name so mock and real (and different models) never collide.
+    safe = client_name.replace(":", "-").replace("/", "-")
+    return DECISIONS_DIR / f"{group.name}_{safe}_seed{seed}.jsonl"
 
 
 def _load_cache(path: Path) -> dict[str, Decision]:
@@ -80,7 +82,7 @@ def run_backtest(group: Group, client: LLMClient, seed: int,
     decision_days = days[:-1]          # need T+1 to realize the return
     agent = TradingAgent(client, UNIVERSE, temperature=temperature)
 
-    cache_path = _cache_file(group, seed)
+    cache_path = _cache_file(group, seed, client.name)
     cache = _load_cache(cache_path)
 
     weights_rows, exposure, confidence, decisions = {}, {}, {}, []
