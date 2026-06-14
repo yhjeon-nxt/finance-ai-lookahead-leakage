@@ -307,6 +307,11 @@ The cross-model contrast is marginal (p≈0.075); the within-model contrast is d
 consistent but not significant at this sample size (~100–128 days × 3 seeds) — an
 **underpowering** limitation, not evidence of absence.
 
+![Timing prescience with CIs](figures/timing_prescience_ci.png)
+
+*Exposure-timing prescience per group (mean ± 95% bootstrap CI). Positive only for the treatment
+in-distribution; both controls are negative. The wide intervals make the underpowering explicit.*
+
 ### 4.5 Within-model foresight gap + regime-adjusted difference-in-differences
 | Metric | LLM gap (T-in−C-B) | No-memory baseline gap | **DiD (leakage)** |
 |---|---|---|---|
@@ -343,6 +348,24 @@ pre-event exposure is dominated by noise (null σ ≈ 3× larger). This directly
 
 *Seed-averaged portfolio exposure through 2024-H2 (band = inter-seed min/max). The treatment
 (green) cuts risk around the Aug-5 crash; the control (blue) is comparatively noisy.*
+
+### 4.8 Per-ticker and allocation views
+Beyond portfolio-level metrics, the *composition* of the treatment's book is revealing. Around
+the Nov-5 2024 election (±4 days), the treatment **overweights every one of the four expected
+"Trump-trade" beneficiaries** (TSLA, JPM, IWM, COIN) relative to the control, while leaning *less*
+on the broad-market names (SPY, NVDA) the control favours:
+
+![Election-window allocation](figures/election_allocation.png)
+
+*Mean target weight around the Nov-5 election; * = expected Trump-trade winners. The treatment
+(green) tilts toward the election beneficiaries more than the control (blue) on all four.*
+
+This is striking because the cutoff probe shows qwen3:8b **verbally refuses** the election
+question (RLHF guardrail) — yet its *allocations* still tilt toward the winners. Leakage can be
+**behavioural even where verbal recall is suppressed**. Per-ticker next-day prescience
+(`figures/ticker_prescience.png`) is noisier (n≈127/ticker) but the treatment's positive values
+concentrate on the AI/election-sensitive names (COIN +0.12, IWM +0.10, NVDA/JPM ≈ +0.03), whereas
+the control is mostly ≤0.
 
 ## 5. Discussion & Forensic Analysis
 
