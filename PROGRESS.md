@@ -11,7 +11,7 @@ Durable across context compaction — read this + `findings.md` to resume.
 | 1 | Audit class presentations + verify model cutoffs | ✅ audit done (cutoff probe at run-time) |
 | 2 | Data engineering pipeline | ✅ done (both windows real; causality guard passes) |
 | 3 | Agent + backtest engine + metrics (local smoke) | ✅ done (validated on real models) |
-| 4 | Cost-optimized EC2 spot run (GATED) | 🟢 RELAUNCHED i-0d47d93c62c35c0e3 (fixed bootstrap; after 18-finding adversarial review) |
+| 4 | Cost-optimized EC2 spot run (GATED) | 🟢 RUN #3 i-037d518f35e9f3fdf (pyarrow+timeout fixed). #2 died on missing pyarrow |
 | 5 | Evaluation + statistical proof | ⬜ pending |
 | 6 | Research report | ⬜ pending |
 

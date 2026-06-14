@@ -38,6 +38,17 @@ structured output (tool use 8/8, reflection 6/8, ReAct 5/8) → confirms my mini
   costs ~$1–2 + setup. → present as the gate choice.
 - **Cache bug fixed:** decision cache now keyed by client name (mock vs real never collide).
 
+## EC2 run findings (runs #2/#3)
+
+- **#2 died on `ImportError: pyarrow`** — parquet engine absent in a bare pip env (worked locally
+  via conda). Fixed: added pyarrow to requirements. The EXIT-trap self-terminated cleanly (~$0.58).
+- **Bigger ≠ newer (empirical, run #2 selection):** `qwen2.5:32b` self-reports an *October 2022/23*
+  cutoff and denies 2024 — OLDER knowledge than the 8B. `qwen3:32b` scored 0/4 only because its
+  20GB cold-load **timed out** the client (infra, not ignorance) → fixed with 600s timeout. The
+  gate correctly fell back to the validated `qwen3:8b` (2/4: knows Aug-5 crash + NVDA split). This
+  is a reportable result: among available open models, the 8B 2025 model knows the test window
+  better than the 32B candidates. Run #3 gives qwen3:32b a fair shot; qwen3:8b remains the fallback.
+
 ## Decisions / pivots
 
 - 2026-06-14: API → local open models (ollama) for a *real* cutoff gap, zero API cost.

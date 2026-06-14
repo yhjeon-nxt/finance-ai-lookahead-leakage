@@ -1,3 +1,2 @@
-i-... see below
-relaunch (fixed): g6e.xlarge spot, ap-northeast-2a
-i-0d47d93c62c35c0e3
+instance(2nd relaunch, pyarrow+timeout fixed): i-037d518f35e9f3fdf
+g6e.xlarge spot ap-northeast-2a
