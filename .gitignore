@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Environments / secrets
+.env
+*.pem
+aws_credentials*
+
+# Data & heavy artifacts (kept in S3, not git)
+data/raw/
+data/processed/
+*.parquet
+*.feather
+
+# Run outputs (selectively committed; large/raw streamed to S3)
+results/raw_llm_outputs/
+results/**/*.jsonl
+results/**/checkpoints/
+
+# OS
+.DS_Store

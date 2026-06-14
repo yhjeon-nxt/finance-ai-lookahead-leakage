@@ -1,0 +1,24 @@
+# Core data / numerics
+pandas>=2.2
+numpy>=1.26
+scipy>=1.11
+
+# Market data
+yfinance>=0.2
+
+# Backtesting / vectorized eval
+vectorbt>=0.27
+
+# Plotting
+matplotlib>=3.8
+
+# LLM agent engine (local, open-source models)
+ollama>=0.3
+
+# AWS (S3 artifact sync)
+boto3>=1.34
+
+# Utilities
+tqdm>=4.66
+pydantic>=2.6
+tenacity>=8.2
