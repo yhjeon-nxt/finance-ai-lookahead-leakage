@@ -1,0 +1,148 @@
+{
+  "tag": "smoke",
+  "groups": {
+    "C-A": {
+      "model": "llama3.1:8b",
+      "financial": {
+        "total_return": 0.1256679931284319,
+        "ann_return": 0.26953243459512677,
+        "ann_vol": 0.2664054932684754,
+        "sharpe": 0.9942832630554642,
+        "max_drawdown": -0.14126568260636468,
+        "n_days": 127.0,
+        "turnover": 0.7688771628998319
+      },
+      "prescience": {
+        "ticker_prescience": -0.01810987278436719,
+        "exposure_timing": -0.023836874400936337,
+        "conf_weighted_timing": -0.016086389409953557
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.2222322834645669,
+        "us_election_trump_trade": -0.2787322834645669,
+        "event_timing_mean": -0.028249999999999997
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.011098484238287637,
+        "yen_carry_unwind_crash_excess_vs_mkt": -0.029534496070078887,
+        "us_election_trump_trade_port_ret": 0.03459648564437652,
+        "us_election_trump_trade_excess_vs_mkt": 0.029853278466683612
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {},
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "C-B": {
+      "model": "qwen3:8b",
+      "financial": {
+        "total_return": 0.0011446803928461535,
+        "ann_return": 0.02438692879668153,
+        "ann_vol": 0.173308674544858,
+        "sharpe": 0.054667013819725385,
+        "max_drawdown": -0.09979973979177353,
+        "n_days": 101.0,
+        "turnover": 0.7988967082917084
+      },
+      "prescience": {
+        "ticker_prescience": -0.004470771411162044,
+        "exposure_timing": -0.06250972337624763,
+        "conf_weighted_timing": -0.04213373488470181
+      },
+      "pre_event_timing": {},
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {},
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "T-in": {
+      "model": "qwen3:8b",
+      "financial": {
+        "total_return": 0.1256679931284319,
+        "ann_return": 0.26953243459512677,
+        "ann_vol": 0.2664054932684754,
+        "sharpe": 0.9942832630554642,
+        "max_drawdown": -0.14126568260636468,
+        "n_days": 127.0,
+        "turnover": 0.7688771628998319
+      },
+      "prescience": {
+        "ticker_prescience": -0.01810987278436719,
+        "exposure_timing": -0.023836874400936337,
+        "conf_weighted_timing": -0.016086389409953557
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.2222322834645669,
+        "us_election_trump_trade": -0.2787322834645669,
+        "event_timing_mean": -0.028249999999999997
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.011098484238287637,
+        "yen_carry_unwind_crash_excess_vs_mkt": -0.029534496070078887,
+        "us_election_trump_trade_port_ret": 0.03459648564437652,
+        "us_election_trump_trade_excess_vs_mkt": 0.029853278466683612
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {},
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    }
+  },
+  "comparisons": {
+    "T-in_vs_C-A": {
+      "T-in_timing_prescience": {
+        "point": -0.02383687440093633,
+        "lo": -0.1382590301638639,
+        "hi": 0.08916065885407504,
+        "p_gt_0": 0.6563333333333333,
+        "n": 254
+      },
+      "C-A_timing_prescience": {
+        "point": -0.02383687440093633,
+        "lo": -0.1382590301638639,
+        "hi": 0.08916065885407504,
+        "p_gt_0": 0.6563333333333333,
+        "n": 254
+      },
+      "permutation_diff": {
+        "diff": 0.0,
+        "p_value": 1.0
+      }
+    },
+    "T-in_vs_C-B": {
+      "T-in_timing_prescience": {
+        "point": -0.02383687440093633,
+        "lo": -0.1382590301638639,
+        "hi": 0.08916065885407504,
+        "p_gt_0": 0.6563333333333333,
+        "n": 254
+      },
+      "C-B_timing_prescience": {
+        "point": -0.06250972337624762,
+        "lo": -0.19679948647045306,
+        "hi": 0.0714641997152935,
+        "p_gt_0": 0.8056666666666666,
+        "n": 202
+      },
+      "permutation_diff": {
+        "diff": 0.038672848975311286,
+        "p_value": 0.6894621075784843
+      }
+    }
+  },
+  "foresight_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": -0.013639101373205145,
+    "gap_exposure_timing": 0.0386728489753113,
+    "gap_conf_weighted_timing": 0.026047345474748254
+  }
+}
