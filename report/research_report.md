@@ -351,21 +351,27 @@ pre-event exposure is dominated by noise (null σ ≈ 3× larger). This directly
 
 ### 4.8 Per-ticker and allocation views
 Beyond portfolio-level metrics, the *composition* of the treatment's book is revealing. Around
-the Nov-5 2024 election (±4 days), the treatment **overweights every one of the four expected
-"Trump-trade" beneficiaries** (TSLA, JPM, IWM, COIN) relative to the control, while leaning *less*
-on the broad-market names (SPY, NVDA) the control favours:
+the Nov-5 2024 election (±7 days), we test the treatment-minus-control weight difference per
+ticker with a permutation test (20k perms over seed×day units):
 
 ![Election-window allocation](figures/election_allocation.png)
 
-*Mean target weight around the Nov-5 election; * = expected Trump-trade winners. The treatment
-(green) tilts toward the election beneficiaries more than the control (blue) on all four.*
+*Mean target weight around the Nov-5 election with per-ticker permutation p-values; * = expected
+Trump-trade winners. Crimson = p<0.1.*
+
+The treatment **significantly overweights JPM** (banks; Δ=+0.088, **p=0.001**, survives a
+7-ticker Bonferroni correction) and **marginally IWM** (small caps; Δ=+0.049, p=0.077) — both
+canonical Trump-trade beneficiaries — while showing **no significant tilt on the non-election
+names** (SPY/QQQ/NVDA, all p>0.19, and if anything the control holds *more* SPY). The other two
+winners (TSLA, COIN) tilt positive but not significantly. So the election tilt is real but
+*selective* (strongest on banks), not a blanket basket bet.
 
 This is striking because the cutoff probe shows qwen3:8b **verbally refuses** the election
-question (RLHF guardrail) — yet its *allocations* still tilt toward the winners. Leakage can be
-**behavioural even where verbal recall is suppressed**. Per-ticker next-day prescience
-(`figures/ticker_prescience.png`) is noisier (n≈127/ticker) but the treatment's positive values
-concentrate on the AI/election-sensitive names (COIN +0.12, IWM +0.10, NVDA/JPM ≈ +0.03), whereas
-the control is mostly ≤0.
+question (RLHF guardrail) — yet its *allocation* still tilts significantly toward a key winner.
+Leakage can be **behavioural even where verbal recall is suppressed**. Per-ticker next-day
+prescience (`figures/ticker_prescience.png`) is noisier (n≈127/ticker) but the treatment's
+positive values concentrate on the AI/election-sensitive names (COIN +0.12, IWM +0.10,
+NVDA/JPM ≈ +0.03), whereas the control is mostly ≤0.
 
 ## 5. Discussion & Forensic Analysis
 
