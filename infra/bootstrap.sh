@@ -43,8 +43,12 @@ stream_logs &
 STREAM_PID=$!
 
 # --- deps -------------------------------------------------------------------
+# Wait up to 5 min for the dpkg lock: cloud-init runs its own apt at boot and would otherwise
+# race us ("Could not get lock /var/lib/dpkg/lock-frontend").
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -y && apt-get install -y python3-pip awscli curl
+APT="apt-get -o DPkg::Lock::Timeout=300 -y"
+$APT update
+$APT install python3-pip awscli curl
 curl -fsSL https://ollama.com/install.sh | sh
 nohup ollama serve >/var/log/ollama.log 2>&1 &
 for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sleep 2; done
