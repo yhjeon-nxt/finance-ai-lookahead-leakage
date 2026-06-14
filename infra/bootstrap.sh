@@ -53,12 +53,15 @@ curl -fsSL https://ollama.com/install.sh | sh
 nohup ollama serve >/var/log/ollama.log 2>&1 &
 for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sleep 2; done
 
-# --- models: control + candidate treatments (selection happens after code) --
-# qwen3:32b = bigger candidate (fair shot w/ 600s cold-load timeout); qwen3:8b = known-eligible
-# fallback (verified: 2/4, denies 2026, sane). qwen2.5:32b dropped — verified older-cutoff (2022/23).
-ollama pull llama3.1:8b
-ollama pull qwen3:32b
-ollama pull qwen3:8b
+# --- models: control + treatment(s) (env-driven) -----------------------------
+# LEAKAGE_FORCE_TREATMENT (if set) pins the treatment and skips auto-selection (used for the
+# Gemma-3 independent-family replication). Otherwise pull the candidate set and gate-select.
+CONTROL_M="${LEAKAGE_CONTROL_MODEL:-llama3.1:8b}"
+FORCE_TREAT="${LEAKAGE_FORCE_TREATMENT:-}"
+CANDIDATES="${LEAKAGE_TREAT_CANDIDATES:-qwen3:32b qwen3:8b}"
+ollama pull "$CONTROL_M"
+if [ -n "$FORCE_TREAT" ]; then ollama pull "$FORCE_TREAT"
+else for m in $CANDIDATES; do ollama pull "$m"; done; fi
 
 # --- code + prepared data from S3 ------------------------------------------
 mkdir -p "$WORKDIR" && cd "$WORKDIR"
@@ -75,15 +78,18 @@ sync_results() { aws s3 sync "$WORKDIR/results/" "s3://$S3_BUCKET/$S3_PREFIX/$RU
 ( while true; do sync_results; sleep 60; done ) &
 RESYNC_PID=$!
 
-# Empirically select the treatment model: highest verified 2024-H2 recall among candidates that
-# also deny 2026 knowledge + pass sanity (pick_best fails loudly if none qualify). qwen3:8b is a
-# guaranteed-eligible fallback so the bigger models are preferred only when they actually qualify.
-export LEAKAGE_CONTROL_MODEL=llama3.1:8b
-TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen3:8b 2>>"$LOG" | tail -1)
-echo "selected treatment model: '$TREAT'"
-[ -n "$TREAT" ] || { echo "treatment selection produced no model — aborting"; exit 3; }
+# Treatment: forced (replication runs) or gate-selected (highest verified 2024-H2 recall among
+# candidates that deny 2026 + pass sanity; pick_best fails loudly if none qualify).
+export LEAKAGE_CONTROL_MODEL="$CONTROL_M"
+if [ -n "$FORCE_TREAT" ]; then
+  TREAT="$FORCE_TREAT"; echo "forced treatment model: '$TREAT'"
+else
+  TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick $CANDIDATES 2>>"$LOG" | tail -1)
+  echo "selected treatment model: '$TREAT'"
+fi
+[ -n "$TREAT" ] || { echo "no treatment model — aborting"; exit 3; }
 export LEAKAGE_TREATMENT_MODEL="$TREAT"
-export LEAKAGE_TREATMENT_CUTOFF="2024+ (auto-selected)"
+export LEAKAGE_TREATMENT_CUTOFF="2024+ (${FORCE_TREAT:+forced }auto)"
 
 set +e
 PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.main --tag "$RUN_TAG" --no-s3
