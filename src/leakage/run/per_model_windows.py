@@ -32,12 +32,15 @@ from leakage.run.orchestrate import _market_next  # noqa: E402
 Y2023 = Window("Y2023", date(2023, 1, 1), date(2023, 12, 31), date(2022, 10, 1))
 Y2024 = Window("Y2024", date(2024, 1, 1), date(2024, 12, 31), date(2023, 10, 1))
 Y2025 = Window("Y2025", date(2025, 1, 1), date(2025, 12, 31), date(2024, 10, 1))
+Y2026 = Window("Y2026", date(2026, 1, 1), date(2026, 6, 13), date(2025, 10, 1))
 
-# Each model: 1 year INSIDE its training cutoff vs 1 year clearly AFTER it.
+# Each model: ~1 year INSIDE its training cutoff vs a window clearly AFTER it. The OUT window is
+# chosen PER MODEL so it is genuinely post-cutoff: for qwen3 (a 2025-release model that partly
+# knows 2025) the only clean OOD window is 2026; for the others 2025 is clean.
 MODELS = [
     {"tag": "llama3.1:8b", "cutoff": "2023-12", "recall": "denies 2024", "in": Y2023, "out": Y2025},
-    {"tag": "qwen2.5:7b",  "cutoff": "~2023-10", "recall": "denies 2024", "in": Y2023, "out": Y2025},
-    {"tag": "qwen3:8b",    "cutoff": "~2024",    "recall": "RECALLS 2024-H2", "in": Y2024, "out": Y2025},
+    {"tag": "qwen2.5:7b",  "cutoff": "~2023-10", "recall": "knows 2023, denies 2024", "in": Y2023, "out": Y2025},
+    {"tag": "qwen3:8b",    "cutoff": "~2024-Q4", "recall": "RECALLS 2024-H2", "in": Y2024, "out": Y2026},
     {"tag": "gemma3:12b",  "cutoff": "2024-08",  "recall": "confabulates 2024", "in": Y2024, "out": Y2025},
 ]
 
@@ -65,7 +68,7 @@ def _run_cell(tag: str, window: Window, seeds, mock: bool):
 
 def main():
     seeds = SEEDS
-    for w in (Y2023, Y2024, Y2025):
+    for w in (Y2023, Y2024, Y2025, Y2026):
         download_prices(w)
     out = {"design": "per-model in-train vs out-of-train (1yr each)", "seeds": seeds, "models": {}}
 
