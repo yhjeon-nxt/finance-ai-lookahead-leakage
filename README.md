@@ -28,7 +28,7 @@ signature — **Sharpe 1.76 in-dist vs 0.30/0.49 controls**, de-risks before the
 (p=0.051), positive regime-adjusted DiD. `gemma3:12b` (official Aug-2024 cutoff but **confabulates**
 the period — projects "Biden" as 2024 winner) does **not** replicate it (Sharpe 0.75, no crash
 de-risk, ns). **Lesson: a documented in-window cutoff is necessary but not sufficient — leakage
-needs genuine recall, so probe each model.** Total EC2 cost ≈ $1.4.
+needs genuine recall, so probe each model.** Total EC2 cost ≈ $5.4 (5 spot runs).
 
 See [`docs/superpowers/specs/2026-06-14-llm-lookahead-leakage-design.md`](docs/superpowers/specs/2026-06-14-llm-lookahead-leakage-design.md)
 for the full design, and [`PROGRESS.md`](PROGRESS.md) for live status.

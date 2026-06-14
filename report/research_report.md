@@ -567,8 +567,8 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
   2026 Q1/Q2). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
 - **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
   + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
-  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $1.4 (qwen3 run ≈ $0.8
-  incl. 3 aborted boots that each self-terminated cleanly; Gemma co-treatment run ≈ $0.6).
+  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $5.4 across 5 EC2 spot runs (qwen3 main ≈ $0.8 incl. 3 aborted boots
+  that each self-terminated cleanly; Gemma co-treatment ≈ $0.6; per-model 4×in/out sweeps ≈ $4).
 - **Stats:** seed-averaged per-day prescience contributions; circular block bootstrap + permutation
   tests; pseudo-event null with 98 random pseudo-events.
 
