@@ -75,6 +75,37 @@ leakage"*; TradeMaster: *"last year for test, penultimate for validation, remain
 training"*). **None** addressed the case where the *model's pre-training* already contains the
 test period. This project targets precisely that gap.
 
+## 2b. Related Work
+
+Our study sits within the literature on **training-data contamination**, where exposure to
+evaluation content during pre-training inflates measured capability and detection methods
+struggle to certify cleanliness (survey: Cheng et al., 2025, arXiv:2502.14425; *Does Data
+Contamination Detection Work (Well) for LLMs?*, arXiv:2410.18966). Temporal look-ahead in
+financial agents is a distinctive special case: the "leaked" content is the *future outcome of
+the very series being traded*, so contamination surfaces not as a higher benchmark score but as
+spurious trading profit. The closest prior work establishes the effect. **Sarkar and Vafa
+(2024)** show pre-trained models exhibit look-ahead bias in return prediction and *see through*
+anonymisation in long documents, so masking firm names is an incomplete remedy
+([SSRN 4754678](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4754678)). **Gao, Jiang and
+Yan (2025)** formalise a test of this bias, finding LLMs predict *past* moves more accurately
+than future ones — a signature of memorisation, not forecasting. At the agent level, **Li et al.
+(2025, *Profit Mirage*, arXiv:2510.07920)** find agent profitability degrades systematically
+*past* the knowledge cutoff across Claude-3.5/GPT-4o/Grok/Llama-3.1/Qwen-2.5. On effective
+cutoffs, **Cheng et al. (2024, *Dated Data*, arXiv:2403.12958)** show that a model's *effective*
+cutoff diverges from its reported one because web dumps mix old content and deduplication is
+imperfect — which directly explains our counterintuitive finding that the larger 32B candidates
+recall *less* of the target window than the 8B treatment (effective cutoff depends on data
+mixture, not parameter count).
+
+We extend this line in three ways. **First**, rather than anonymising a text context that prior
+work shows models penetrate, we remove the textual channel entirely — a **price-only, strictly
+causal context** — so any foresight must originate in parametric memory. **Second**, we *select*
+the treatment model **empirically via a cutoff probe** rather than trusting the model card.
+**Third**, we isolate the parametric channel from regime confounds with a
+**difference-in-differences** design (same model in-distribution vs out-of-distribution, relative
+to a memory-free momentum baseline) — converting "performance collapses post-cutoff" into an
+estimable foresight gap with an explicit no-memory counterfactual.
+
 ## 3. Methodology
 
 ### 3.1 Hypotheses
@@ -288,6 +319,26 @@ The leakage here is **behavioural, not verbalised**: the model acts on memorised
 (cutting risk before the crash) without naming the event in its reasoning. (Contrast the *probe*,
 §3.3/§5.3, where direct questioning does elicit both recall and confabulation.)
 
+### 4.7 Pseudo-event null for the Aug-5 de-risk (calibrated significance)
+A pre-event timing score is only meaningful against a null. We compare the treatment's observed
+Aug-5 de-risk to the distribution of de-risk scores at **random pseudo-event dates** within the
+window (same metric, 98 valid pseudo-events):
+
+| Group | Observed Aug-5 de-risk | Null mean ± σ | Empirical p (one-sided) |
+|---|---|---|---|
+| **T-in** (knows the crash) | **+0.115** | +0.001 ± 0.065 | **0.051** |
+| C-A (control) | (aggregation-unstable) | −0.007 ± **0.194** | 0.31 |
+
+The treatment's de-risking into the crash is in the **top ~5%** of random-timing outcomes and is
+**stable across aggregation methods**; the control produces no calibrated de-risk signal and its
+pre-event exposure is dominated by noise (null σ ≈ 3× larger). This directly answers the
+"pre-event timing has no null distribution" critique.
+
+![Exposure timeline](figures/exposure_timeline_2024H2.png)
+
+*Seed-averaged portfolio exposure through 2024-H2 (band = inter-seed min/max). The treatment
+(green) cuts risk around the Aug-5 crash; the control (blue) is comparatively noisy.*
+
 ## 5. Discussion & Forensic Analysis
 
 ### 5.1 The cutoff probe is itself forensic evidence
@@ -320,6 +371,32 @@ following the Federal Reserve's unexpected 50bps hike in early March 2026"). For
 agent, confident confabulation of the future is at least as dangerous as accurate memorisation:
 the former produces unfalsifiable, plausible-sounding rationales that can drive real positions.
 
+### 5.4 Threats to validity (and how they were addressed)
+| Threat | Mitigation in this study |
+|---|---|
+| **Pipeline leakage** (future data in the agent's feed) | Price-only causal context + hard causality assertion; the only foresight channel is parametric memory. |
+| **Regime confound** (2024 vs 2026 differ in dynamics) | Difference-in-differences vs a no-memory momentum baseline; the baseline's own gap is *negative*. |
+| **Model-family/capability confound** (treatment vs control) | Within-model in-dist vs OOD contrast (same backbone); multi-period robustness pass. |
+| **Treatment-selection circularity** | Selecting a model that *knows* the period then testing whether it *trades on* it is sound (independently affirmed by the adversarial review). |
+| **Lucky seed / cherry-picking** | ≥3 seeds; inter-seed band on the exposure figure; pseudo-event null. |
+| **Spurious pre-event timing** | Calibrated empirical p-value via 98 random pseudo-events (§4.7). |
+| **Self-reported cutoffs unreliable** | Empirical cutoff + price-recall probes, not model cards. |
+| **Implementation bugs** | 7-dimension adversarial multi-agent review; 18 confirmed issues fixed pre-run (§3.11, `verification_findings.md`). |
+| **Parse-failure contamination** | Parse-fail days carried forward for equity but excluded from foresight metrics; `n_parse_fail = 0` on the final run. |
+
+### 5.5 Limitations
+- **Statistical power.** ~100–250 trading days per cell; the cross-model contrast is marginal
+  (p≈0.075) and the single-pair within-model contrast is non-significant (p≈0.40). We report
+  *moderate* support; the multi-period pass (§4.7-adjacent / §4.8) is the power remedy.
+- **One treatment family.** Results rest on the Qwen3 backbone; an independent-family
+  co-treatment (e.g. Gemma 3 12B, official Aug-2024 cutoff) is the highest-value extension to
+  break the family confound and test replication. We do **not** use a proprietary API model
+  (GPT-4o/Claude) as it would forfeit the controllable-cutoff, reproducible, zero-cost design.
+- **Small open models confabulate**, so absence of explicit rationale tells is expected; leakage
+  here is behavioural. Behaviour-independent membership-inference/perplexity probes are future work.
+- **Single asset universe / daily cadence / long-only.** Generalisation to other universes,
+  intraday horizons, and short-selling is untested.
+
 ## 6. Conclusion & Robust-Backtesting Standards
 
 Parametric look-ahead leakage is a first-class threat to LLM-agent backtests, invisible to the
@@ -340,10 +417,26 @@ chronological-split discipline the field currently relies on. We recommend:
 ---
 
 ### Appendix A — Reproducibility
-All code, prompts, the causality guard, the cutoff/selection probes, metrics, statistics, and
-the EC2 infra (spot launch, bootstrap, self-terminate) are in the repository. The full run is
-reproducible via `infra/stage.sh` + `infra/launch_spot.sh`, or locally via
+All code, prompts, the causality guard, the cutoff/selection/price-recall probes, metrics,
+statistics, and the EC2 infra (spot launch, bootstrap, self-terminate) are in the repository.
+Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally via
 `python -m leakage.run.main`.
+
+**Load-bearing settings (fix these to reproduce):**
+- **Models:** treatment `qwen3:8b`, control `llama3.1:8b` (ollama 0.30.8); treatment auto-selected
+  by the gated probe among `{qwen3:32b, qwen3:8b}`.
+- **Inference:** `format=json`, **`think=False`** (mandatory for qwen3 — see Appendix B),
+  `temperature=0.7`, `num_predict=700`, `seed ∈ {0,1,2}`; 600 s client timeout for 32B cold-loads.
+- **Universe:** SPY, QQQ, NVDA, TSLA, JPM, IWM, COIN; daily rebalance; long-only; 60-day trailing
+  context; start equity 1.0.
+- **Windows:** in-dist 2024-07-01…12-31; OOD 2026-01-01…05-31 (multi-period adds 2024-H1 and
+  2026 Q1/Q2). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
+- **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
+  + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
+  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $0.8 (incl. 3 aborted
+  boots that each self-terminated cleanly).
+- **Stats:** seed-averaged per-day prescience contributions; circular block bootstrap + permutation
+  tests; pseudo-event null with 98 random pseudo-events.
 
 ### Appendix B — The inference-config hazard
 qwen3 is a hybrid reasoning model; under `format=json` with thinking enabled it emits empty
