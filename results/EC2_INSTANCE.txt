@@ -1,0 +1,3 @@
+i-0bc84738d970a1330
+launched: g6e.xlarge spot, ap-northeast-2a
+monitor bg id: bl3kja8d2

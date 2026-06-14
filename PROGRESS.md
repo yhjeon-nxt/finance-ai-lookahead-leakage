@@ -11,7 +11,7 @@ Durable across context compaction — read this + `findings.md` to resume.
 | 1 | Audit class presentations + verify model cutoffs | ✅ audit done (cutoff probe at run-time) |
 | 2 | Data engineering pipeline | ✅ done (both windows real; causality guard passes) |
 | 3 | Agent + backtest engine + metrics (local smoke) | ✅ done (validated on real models) |
-| 4 | Cost-optimized EC2 spot run (GATED) | 🟡 ready — blocked on IAM instance-profile name |
+| 4 | Cost-optimized EC2 spot run (GATED) | 🟢 LAUNCHED i-0bc84738d970a1330 (g6e.xlarge spot, ap-northeast-2a) |
 | 5 | Evaluation + statistical proof | ⬜ pending |
 | 6 | Research report | ⬜ pending |
 
