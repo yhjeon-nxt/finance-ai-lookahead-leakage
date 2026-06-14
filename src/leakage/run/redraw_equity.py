@@ -11,6 +11,7 @@ Equity is recomputed deterministically from the logged target weights and realis
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,7 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from leakage.config import IN_DIST, OOD, RESULTS_DIR, UNIVERSE, Window  # noqa: E402
 from leakage.data.ingest import load_prices, trading_days  # noqa: E402
 
-DEC = RESULTS_DIR / "ec2" / "decisions"
+_RUN = os.environ.get("LEAKAGE_RUN_TAG", "ec2")
+_TREAT = os.environ.get("LEAKAGE_TREATMENT_MODEL", "qwen3:8b")
+_CTRL = os.environ.get("LEAKAGE_CONTROL_MODEL", "llama3.1:8b")
+DEC = RESULTS_DIR / _RUN / "decisions"
 FIG = RESULTS_DIR / "figures"
 AUG5, NOV5 = pd.Timestamp("2024-08-05"), pd.Timestamp("2024-11-05")
 
@@ -57,13 +61,13 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    t_in = _equity_by_date("T-in", "qwen3:8b", IN_DIST)
-    c_a = _equity_by_date("C-A", "llama3.1:8b", IN_DIST)
-    c_b = _equity_by_date("C-B", "qwen3:8b", OOD)
+    t_in = _equity_by_date("T-in", _TREAT, IN_DIST)
+    c_a = _equity_by_date("C-A", _CTRL, IN_DIST)
+    c_b = _equity_by_date("C-B", _TREAT, OOD)
 
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(13, 5), gridspec_kw={"width_ratios": [1.3, 1]})
-    axL.plot(t_in.index, t_in.values, color="tab:green", label="T-in qwen3:8b (KNOWS 2024-H2)")
-    axL.plot(c_a.index, c_a.values, color="tab:blue", label="C-A llama3.1:8b (control, same dates)")
+    axL.plot(t_in.index, t_in.values, color="tab:green", label=f"T-in {_TREAT} (KNOWS 2024-H2)")
+    axL.plot(c_a.index, c_a.values, color="tab:blue", label=f"C-A {_CTRL} (control, same dates)")
     for d, lab in [(AUG5, "Aug-5 crash"), (NOV5, "Nov-5 election")]:
         axL.axvline(d, color="red", ls="--", lw=1); axL.text(d, axL.get_ylim()[1], lab,
                                                              rotation=90, va="top", fontsize=8, color="red")
@@ -72,14 +76,14 @@ def main():
     axL.set_xlabel("date (2024-H2)"); axL.set_ylabel("equity (start=1.0)"); axL.legend(loc="upper left")
     axL.tick_params(axis="x", rotation=30)
 
-    axR.plot(c_b.index, c_b.values, color="tab:orange", label="C-B qwen3:8b (same model, OOD)")
+    axR.plot(c_b.index, c_b.values, color="tab:orange", label=f"C-B {_TREAT} (same model, OOD)")
     axR.axhline(1.0, color="k", lw=0.5, ls=":")
     axR.set_title("Out-of-distribution time control (2026)")
     axR.set_xlabel("date (2026)"); axR.legend(loc="upper left"); axR.tick_params(axis="x", rotation=30)
 
     fig.suptitle("Equity by calendar date — treatment separates only where it has memory", y=1.02)
     fig.tight_layout()
-    out = FIG / "equity_ec2_bydate.png"
+    out = FIG / f"equity_{_RUN}_bydate.png"
     fig.savefig(out, dpi=130, bbox_inches="tight"); plt.close(fig)
     print(f"wrote {out}")
     print(f"final equity — T-in={t_in.iloc[-1]:.3f}  C-A={c_a.iloc[-1]:.3f}  C-B={c_b.iloc[-1]:.3f}")

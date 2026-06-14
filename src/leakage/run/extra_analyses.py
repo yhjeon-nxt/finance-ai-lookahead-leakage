@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -20,7 +21,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from leakage.config import RESULTS_DIR  # noqa: E402
 
-DEC_DIR = RESULTS_DIR / "ec2" / "decisions"
+_RUN = os.environ.get("LEAKAGE_RUN_TAG", "ec2")
+_SFX = "" if _RUN == "ec2" else f"_{_RUN}"
+DEC_DIR = RESULTS_DIR / _RUN / "decisions"
 FIG_DIR = RESULTS_DIR / "figures"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 AUG5 = pd.Timestamp("2024-08-05")
@@ -93,7 +96,7 @@ def exposure_timeline_fig():
     ax.set_title("Portfolio exposure (risk dial) through 2024-H2 — treatment vs control")
     ax.set_ylabel("total invested fraction"); ax.set_ylim(0, 1.05)
     ax.legend(loc="lower right"); fig.tight_layout()
-    out = FIG_DIR / "exposure_timeline_2024H2.png"
+    out = FIG_DIR / f"exposure_timeline_2024H2{_SFX}.png"
     fig.savefig(out, dpi=130); plt.close(fig)
     return out
 
@@ -105,4 +108,4 @@ if __name__ == "__main__":
         print(f"  {g}: {r}")
     fig = exposure_timeline_fig()
     print(f"=== wrote {fig} ===")
-    (RESULTS_DIR / "pseudo_event_null.json").write_text(json.dumps(res, indent=2))
+    (RESULTS_DIR / f"pseudo_event_null{_SFX}.json").write_text(json.dumps(res, indent=2))

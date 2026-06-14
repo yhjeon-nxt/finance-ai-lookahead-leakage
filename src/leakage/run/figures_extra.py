@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -19,7 +20,14 @@ from leakage.config import IN_DIST, OOD, RESULTS_DIR, UNIVERSE, Window  # noqa: 
 from leakage.data.ingest import load_prices, trading_days  # noqa: E402
 from leakage.metrics import stats  # noqa: E402
 
-DEC = RESULTS_DIR / "ec2" / "decisions"
+# Run-config via env so the same script serves the qwen3 (ec2) and gemma runs. Defaults preserve
+# the original ec2 behaviour and filenames (so existing report figures are untouched).
+_RUN = os.environ.get("LEAKAGE_RUN_TAG", "ec2")
+_TREAT = os.environ.get("LEAKAGE_TREATMENT_MODEL", "qwen3:8b")
+_CTRL = os.environ.get("LEAKAGE_CONTROL_MODEL", "llama3.1:8b")
+_SFX = "" if _RUN == "ec2" else f"_{_RUN}"  # suffix only for non-ec2 runs
+
+DEC = RESULTS_DIR / _RUN / "decisions"
 FIG = RESULTS_DIR / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 NOV5 = pd.Timestamp("2024-11-05")
@@ -90,8 +98,8 @@ def _plot():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    groups = [("T-in", "qwen3:8b", IN_DIST), ("C-A", "llama3.1:8b", IN_DIST),
-              ("C-B", "qwen3:8b", OOD)]
+    groups = [("T-in", _TREAT, IN_DIST), ("C-A", _CTRL, IN_DIST),
+              ("C-B", _TREAT, OOD)]
     colors = {"T-in": "tab:green", "C-A": "tab:blue", "C-B": "tab:orange"}
 
     # --- Figure 1: per-ticker prescience ---
@@ -103,20 +111,20 @@ def _plot():
     ax.axhline(0, color="k", lw=0.6); ax.set_xticks(x); ax.set_xticklabels(UNIVERSE)
     ax.set_ylabel("corr(today's weight, next-day return)")
     ax.set_title("Per-ticker next-day prescience — only the treatment (T-in) is consistently positive")
-    ax.legend(); fig.tight_layout(); fig.savefig(FIG / "ticker_prescience.png", dpi=130); plt.close(fig)
+    ax.legend(); fig.tight_layout(); fig.savefig(FIG / f"ticker_prescience{_SFX}.png", dpi=130); plt.close(fig)
 
     # --- Figure 2: election-window mean allocation (T-in vs C-A) + per-ticker permutation p ---
     lo, hi = NOV5 - pd.Timedelta(days=7), NOV5 + pd.Timedelta(days=7)  # ~±7d for a few more obs
-    raw_t = _window_weights_raw("T-in", "qwen3:8b", IN_DIST, lo, hi)
-    raw_c = _window_weights_raw("C-A", "llama3.1:8b", IN_DIST, lo, hi)
+    raw_t = _window_weights_raw("T-in", _TREAT, IN_DIST, lo, hi)
+    raw_c = _window_weights_raw("C-A", _CTRL, IN_DIST, lo, hi)
     pvals, diffs = {}, {}
     for t in UNIVERSE:
         r = stats.permutation_diff(raw_t[t], raw_c[t], n_perm=20000)
         pvals[t], diffs[t] = r["p_value"], r["diff"]
 
     fig, ax = plt.subplots(figsize=(12, 5.5))
-    ax.bar(x - 0.2, [raw_t[t].mean() for t in UNIVERSE], 0.4, label="T-in (qwen3:8b)", color=colors["T-in"])
-    ax.bar(x + 0.2, [raw_c[t].mean() for t in UNIVERSE], 0.4, label="C-A (llama3.1:8b)", color=colors["C-A"])
+    ax.bar(x - 0.2, [raw_t[t].mean() for t in UNIVERSE], 0.4, label=f"T-in ({_TREAT})", color=colors["T-in"])
+    ax.bar(x + 0.2, [raw_c[t].mean() for t in UNIVERSE], 0.4, label=f"C-A ({_CTRL})", color=colors["C-A"])
     ymax = max([raw_t[t].mean() for t in UNIVERSE] + [raw_c[t].mean() for t in UNIVERSE])
     for j, t in enumerate(UNIVERSE):
         top = max(raw_t[t].mean(), raw_c[t].mean())
@@ -132,13 +140,13 @@ def _plot():
     ax.set_title("Allocation around Nov-5 2024 election (±7d) with per-ticker permutation p (T-in − C-A)\n"
                  "* = expected Trump-trade winners; ***p<.01 **p<.05 *p<.1 (20k perms, seed×day units)")
     ax.legend(loc="upper right"); fig.tight_layout()
-    fig.savefig(FIG / "election_allocation.png", dpi=130); plt.close(fig)
+    fig.savefig(FIG / f"election_allocation{_SFX}.png", dpi=130); plt.close(fig)
     print("\nelection-window per-ticker T-in−C-A diff and permutation p:")
     for t in UNIVERSE:
         print(f"  {t:5} Δ={diffs[t]:+.3f}  p={pvals[t]:.3f}  (winner={t in TRUMP_TRADE})")
 
     # --- Figure 3: headline timing prescience with bootstrap CIs ---
-    rep = json.loads((RESULTS_DIR / "eval_ec2.json").read_text())
+    rep = json.loads((RESULTS_DIR / f"eval_{_RUN}.json").read_text())
     cmp = rep["comparisons"]
     pts = {"T-in": cmp["T-in_vs_C-A"]["T-in_timing_prescience"],
            "C-A": cmp["T-in_vs_C-A"]["C-A_timing_prescience"],
@@ -166,7 +174,7 @@ def _plot():
     ax.set_ylim(min(pts[g]["lo"] for g in pts) - 0.03, top + 0.13)
     ax.set_title("Headline timing prescience + pairwise permutation tests\n"
                  "(positive only for the treatment in-distribution)")
-    fig.tight_layout(); fig.savefig(FIG / "timing_prescience_ci.png", dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(FIG / f"timing_prescience_ci{_SFX}.png", dpi=130); plt.close(fig)
     print(f"\npairwise permutation p — T-in vs C-A: {p_ac:.3f}   T-in vs C-B: {p_ab:.3f}")
 
     print("wrote ticker_prescience.png, election_allocation.png, timing_prescience_ci.png")
