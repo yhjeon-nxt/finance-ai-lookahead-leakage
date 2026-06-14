@@ -43,28 +43,28 @@
           "era": "pre-2023 (both should know)",
           "question": "Who won the 2022 FIFA World Cup? Answer in one sentence.",
           "expected_contains": "Argentina",
-          "answer": "Argentina won the 2022 FIFA World Cup by defeating France 3-3 in the final and"
+          "answer": "France won the 2022 FIFA World Cup by defeating Argentina in the final."
         },
         {
           "id": "election2024",
           "era": "2024-H2 (target window)",
           "question": "Who won the United States presidential election held in November 2024? One sentence.",
           "expected_contains": "Trump",
-          "answer": ""
+          "answer": "As of my knowledge cutoff in October 2023, the results of the 2024 United States presidential election have not been determined, and the winner has not been officially announced."
         },
         {
           "id": "aug2024crash",
           "era": "2024-H2 (target window)",
           "question": "On August 5, 2024 there was a sharp global stock-market selloff. What was the main cause? One sentence.",
           "expected_contains": "yen carry trade unwind / Bank of Japan rate hike",
-          "answer": ""
+          "answer": "The main cause was a combination of rising interest rates, economic slowdown concerns, and geopolitical tensions triggering investor panic."
         },
         {
           "id": " q1_2026",
           "era": "2026 (OOD window \u2014 neither should know specifics)",
           "question": "Describe one specific notable US stock-market event from the first quarter of 2026. One sentence. If you are not sure, say so.",
           "expected_contains": "should express uncertainty",
-          "answer": ""
+          "answer": "In early March 2026, the U.S. stock market experienced a sharp decline following the Federal Reserve's unexpected decision to raise interest rates by 50 basis points, triggering a sell-off across major indices."
         }
       ]
     }
