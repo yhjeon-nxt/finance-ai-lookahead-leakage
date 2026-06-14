@@ -59,9 +59,15 @@ for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sl
 CONTROL_M="${LEAKAGE_CONTROL_MODEL:-llama3.1:8b}"
 FORCE_TREAT="${LEAKAGE_FORCE_TREATMENT:-}"
 CANDIDATES="${LEAKAGE_TREAT_CANDIDATES:-qwen3:32b qwen3:8b}"
-ollama pull "$CONTROL_M"
-if [ -n "$FORCE_TREAT" ]; then ollama pull "$FORCE_TREAT"
-else for m in $CANDIDATES; do ollama pull "$m"; done; fi
+CUSTOM_MODULE="${LEAKAGE_RUN_MODULE:-}"      # e.g. leakage.run.per_model_windows
+PULL_MODELS="${LEAKAGE_PULL_MODELS:-}"       # explicit model list for custom-module runs
+if [ -n "$CUSTOM_MODULE" ]; then
+  for m in $PULL_MODELS; do ollama pull "$m"; done
+elif [ -n "$FORCE_TREAT" ]; then
+  ollama pull "$CONTROL_M"; ollama pull "$FORCE_TREAT"
+else
+  ollama pull "$CONTROL_M"; for m in $CANDIDATES; do ollama pull "$m"; done
+fi
 
 # --- code + prepared data from S3 ------------------------------------------
 mkdir -p "$WORKDIR" && cd "$WORKDIR"
@@ -78,23 +84,30 @@ sync_results() { aws s3 sync "$WORKDIR/results/" "s3://$S3_BUCKET/$S3_PREFIX/$RU
 ( while true; do sync_results; sleep 60; done ) &
 RESYNC_PID=$!
 
-# Treatment: forced (replication runs) or gate-selected (highest verified 2024-H2 recall among
-# candidates that deny 2026 + pass sanity; pick_best fails loudly if none qualify).
 export LEAKAGE_CONTROL_MODEL="$CONTROL_M"
-if [ -n "$FORCE_TREAT" ]; then
-  TREAT="$FORCE_TREAT"; echo "forced treatment model: '$TREAT'"
+if [ -n "$CUSTOM_MODULE" ]; then
+  # Custom experiment module (e.g. per-model in-vs-out); it manages its own models/windows.
+  echo "running custom module: $CUSTOM_MODULE"
+  set +e
+  PYTHONPATH="$WORKDIR/src" python3 -m "$CUSTOM_MODULE"
+  RC=$?
+  set -e
 else
-  TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick $CANDIDATES 2>>"$LOG" | tail -1)
-  echo "selected treatment model: '$TREAT'"
+  # Treatment: forced (replication) or gate-selected (highest verified 2024-H2 recall).
+  if [ -n "$FORCE_TREAT" ]; then
+    TREAT="$FORCE_TREAT"; echo "forced treatment model: '$TREAT'"
+  else
+    TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick $CANDIDATES 2>>"$LOG" | tail -1)
+    echo "selected treatment model: '$TREAT'"
+  fi
+  [ -n "$TREAT" ] || { echo "no treatment model — aborting"; exit 3; }
+  export LEAKAGE_TREATMENT_MODEL="$TREAT"
+  export LEAKAGE_TREATMENT_CUTOFF="2024+ (${FORCE_TREAT:+forced }auto)"
+  set +e
+  PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.main --tag "$RUN_TAG" --no-s3
+  RC=$?
+  set -e
 fi
-[ -n "$TREAT" ] || { echo "no treatment model — aborting"; exit 3; }
-export LEAKAGE_TREATMENT_MODEL="$TREAT"
-export LEAKAGE_TREATMENT_CUTOFF="2024+ (${FORCE_TREAT:+forced }auto)"
-
-set +e
-PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.main --tag "$RUN_TAG" --no-s3
-RC=$?
-set -e
 
 kill "$RESYNC_PID" 2>/dev/null || true
 sync_results

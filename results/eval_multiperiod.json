@@ -1,0 +1,74 @@
+{
+  "design": "within-backbone multi-period (qwen3:8b)",
+  "in_dist_windows": [
+    "2024H1",
+    "2024H2"
+  ],
+  "ood_windows": [
+    "2026Q1",
+    "2026Q2"
+  ],
+  "n_in_dist_days": 250,
+  "n_ood_days": 0,
+  "in_dist_timing_prescience": {
+    "point": -0.048062855980311646,
+    "lo": -0.13651135227482758,
+    "hi": 0.03327171160033368,
+    "p_gt_0": 0.8733333333333333,
+    "n": 250
+  },
+  "ood_timing_prescience": {
+    "point": NaN,
+    "lo": NaN,
+    "hi": NaN,
+    "p_gt_0": NaN,
+    "n": 0
+  },
+  "real_gap": NaN,
+  "regime_baseline_gap": -0.023926132182553298,
+  "DiD": NaN,
+  "permutation_in_vs_ood": {
+    "diff": NaN,
+    "p_value": NaN
+  },
+  "financial_in_dist": [
+    {
+      "window": "2024H1",
+      "total_return": 0.5813229838870304,
+      "ann_return": 0.367465870395129,
+      "ann_vol": 0.18781477432378405,
+      "sharpe": 1.760991538626962,
+      "max_drawdown": -0.12520505196677478,
+      "n_days": 369
+    },
+    {
+      "window": "2024H2",
+      "total_return": 0.49543600931955334,
+      "ann_return": 0.30495180638922426,
+      "ann_vol": 0.23009961688171324,
+      "sharpe": 1.2704233485386267,
+      "max_drawdown": -0.12478022780617448,
+      "n_days": 381
+    }
+  ],
+  "financial_ood": [
+    {
+      "window": "2026Q1",
+      "total_return": 0.0,
+      "ann_return": 0.0,
+      "ann_vol": 0.0,
+      "sharpe": 0.0,
+      "max_drawdown": 0.0,
+      "n_days": 180
+    },
+    {
+      "window": "2026Q2",
+      "total_return": 0.0,
+      "ann_return": 0.0,
+      "ann_vol": 0.0,
+      "sharpe": 0.0,
+      "max_drawdown": 0.0,
+      "n_days": 150
+    }
+  ]
+}

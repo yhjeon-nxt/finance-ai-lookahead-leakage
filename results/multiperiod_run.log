@@ -1,3 +1,22 @@
 /opt/homebrew/Caskroom/miniconda/base/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (7.0.1)/charset_normalizer (3.4.4) doesn't match a supported version!
   warnings.warn(
 [multiperiod] running qwen3:8b across in-dist (2024H1,H2) and OOD (2026Q1,Q2)...
+  [warn] 2024H2 seed1: 110/127 parse failures (excluded from foresight metrics)
+  [warn] 2024H2 seed2: 127/127 parse failures (excluded from foresight metrics)
+  [warn] 2026Q1 seed0: 60/60 parse failures (excluded from foresight metrics)
+  [warn] 2026Q1 seed1: 60/60 parse failures (excluded from foresight metrics)
+  [warn] 2026Q1 seed2: 60/60 parse failures (excluded from foresight metrics)
+  [warn] 2026Q2 seed0: 50/50 parse failures (excluded from foresight metrics)
+  [warn] 2026Q2 seed1: 50/50 parse failures (excluded from foresight metrics)
+  [warn] 2026Q2 seed2: 50/50 parse failures (excluded from foresight metrics)
+[multiperiod] running no-memory momentum baseline for DiD...
+
+================ MULTI-PERIOD RESULT (qwen3:8b backbone) ================
+in-dist days=250  OOD days=0
+in-dist timing prescience: -0.0481  CI[-0.137,+0.033]
+OOD     timing prescience: +nan  CI[+nan,+nan]
+raw gap (in-dist − OOD)  : +nan
+regime baseline gap      : -0.0239
+DiD (leakage estimate)   : +nan
+permutation in vs OOD    : diff=+nan  p=nan
+[multiperiod] wrote /Users/jeon-younghoon/Desktop/lectures/finance_ai/homework/results/eval_multiperiod.json
