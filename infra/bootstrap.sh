@@ -14,6 +14,21 @@ exec > >(tee -a "$LOG") 2>&1
 
 echo "=== $(date -u) bootstrap start (tag=$RUN_TAG) ==="
 
+# Always self-terminate on ANY exit (success, failure, or set -e abort) so a crashed bootstrap
+# never leaves a GPU instance running and billing. Belt-and-braces with shutdown-behavior.
+self_terminate() {
+  local rc=$?
+  echo "=== $(date -u) exiting rc=$rc — self-terminating ==="
+  aws s3 cp "$LOG" "s3://$S3_BUCKET/$S3_PREFIX/$RUN_TAG/bootstrap.log" 2>/dev/null || true
+  local TOK IID REG
+  TOK=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" || true)
+  IID=$(curl -s -H "X-aws-ec2-metadata-token: $TOK" http://169.254.169.254/latest/meta-data/instance-id || true)
+  REG=$(curl -s -H "X-aws-ec2-metadata-token: $TOK" http://169.254.169.254/latest/meta-data/placement/region || true)
+  if [ -n "$IID" ]; then aws ec2 terminate-instances --region "$REG" --instance-ids "$IID" || shutdown -h now
+  else shutdown -h now; fi
+}
+trap self_terminate EXIT
+
 stream_logs() {  # background: ship the log to S3 every 30s so we see progress live
   while true; do
     aws s3 cp "$LOG" "s3://$S3_BUCKET/$S3_PREFIX/$RUN_TAG/bootstrap.log" >/dev/null 2>&1 || true
@@ -61,11 +76,6 @@ set -e
 kill "$RESYNC_PID" 2>/dev/null || true
 sync_results
 kill "$STREAM_PID" 2>/dev/null || true
-aws s3 cp "$LOG" "s3://$S3_BUCKET/$S3_PREFIX/$RUN_TAG/bootstrap.log" || true
-
-echo "=== $(date -u) bootstrap done rc=$RC — self-terminating ==="
-# Self-terminate (defense in depth alongside shutdown-behavior=terminate).
-TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" || true)
-IID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id || true)
-REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region || true)
-[ -n "$IID" ] && aws ec2 terminate-instances --region "$REGION" --instance-ids "$IID" || shutdown -h now
+echo "=== $(date -u) bootstrap done rc=$RC ==="
+# self_terminate runs automatically via the EXIT trap.
+exit "$RC"
