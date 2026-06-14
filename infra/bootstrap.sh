@@ -5,6 +5,10 @@
 # =terminate and the resumable decision cache, a spot interruption costs at most one decision.
 set -euo pipefail
 
+# cloud-init runs user-data as root WITHOUT $HOME; ollama panics ("$HOME is not defined")
+# without it. Set it before anything else.
+export HOME="${HOME:-/root}"
+
 S3_BUCKET="${S3_BUCKET:-neuroxt-personal}"
 S3_PREFIX="${S3_PREFIX:-yhjeon/finance-ai-leakage}"
 RUN_TAG="${RUN_TAG:-ec2}"
