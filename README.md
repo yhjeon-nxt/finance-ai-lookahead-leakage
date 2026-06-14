@@ -13,13 +13,22 @@ LLM-based agentic trading systems, executed by an autonomous research agent.
 
 | Group | Model (local, open-source) | Period traded | Knows the period? |
 |---|---|---|---|
-| **Treatment (in-dist)** | post-2024 model (e.g. `qwen3:8b`) | **2024-H2** (Jul–Dec) | **Yes → leakage suspected** |
+| **Treatment (in-dist)** | `qwen3:8b`; + `gemma3:12b` co-treatment (family 2) | **2024-H2** (Jul–Dec) | **Yes → leakage suspected** |
 | **Control A (model control)** | `llama3.1:8b` (cutoff 2023-12) | 2024-H2 | No |
 | **Control B (time control)** | same treatment model | **2026 Jan–May** (post-cutoff) | No |
 
 The model cutoff gap is **real**, not prompt-simulated — that is the central methodological
-choice. The *within-treatment* in-dist vs. OOD comparison isolates leakage from raw model
-capability (neutralizing the model-family confound between treatment and control).
+choice. The within-treatment in-dist vs. OOD comparison isolates leakage from raw model
+capability; an independent-family co-treatment (`gemma3:12b`) breaks the treatment/control
+**family** confound directly.
+
+### Key result
+`qwen3:8b` (which *genuinely recalls* 2024-H2: the Aug-5 crash + NVIDIA split) shows the leakage
+signature — **Sharpe 1.76 in-dist vs 0.30/0.49 controls**, de-risks before the Aug-5 crash
+(p=0.051), positive regime-adjusted DiD. `gemma3:12b` (official Aug-2024 cutoff but **confabulates**
+the period — projects "Biden" as 2024 winner) does **not** replicate it (Sharpe 0.75, no crash
+de-risk, ns). **Lesson: a documented in-window cutoff is necessary but not sufficient — leakage
+needs genuine recall, so probe each model.** Total EC2 cost ≈ $1.4.
 
 See [`docs/superpowers/specs/2026-06-14-llm-lookahead-leakage-design.md`](docs/superpowers/specs/2026-06-14-llm-lookahead-leakage-design.md)
 for the full design, and [`PROGRESS.md`](PROGRESS.md) for live status.

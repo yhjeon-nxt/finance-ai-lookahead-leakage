@@ -49,6 +49,20 @@ structured output (tool use 8/8, reflection 6/8, ReAct 5/8) → confirms my mini
   is a reportable result: among available open models, the 8B 2025 model knows the test window
   better than the 32B candidates. Run #3 gives qwen3:32b a fair shot; qwen3:8b remains the fallback.
 
+## Gemma 3 12B independent-family co-treatment (run #5, RUN_TAG=gemma)
+
+- **Did NOT replicate** the qwen3:8b leakage signature → pre-registered **H2** confirmed on a
+  second family. Gemma has an *official Aug-2024 cutoff* but **confabulates** 2024-H2: probe →
+  "Joe Biden projected to win" the 2024 election (wrong + not a candidate), Aug-5 crash blamed on
+  "hotter-than-expected jobs report" (backwards). Effective ≠ documented cutoff (cf *Dated Data*).
+- Trading: in-dist Sharpe 0.75 > OOD −0.63 and DiD +0.092 (same SIGN as qwen, directional) BUT
+  weak, **non-significant** (T-in vs C-A p=0.221), **no Aug-5 de-risk** (p=0.54), cash-heavy/low
+  turnover. qwen3:8b: Sharpe 1.76, de-risk p=0.051, DiD +0.136.
+- **KEY LESSON (strengthens the paper):** a documented in-window cutoff is *necessary but not
+  sufficient* for parametric leakage — genuine recall is what matters. qwen recalls→leaks; gemma
+  confabulates→doesn't. ⇒ probe each model, never trust the cutoff date. Cross-family fig:
+  results/figures/cross_family_comparison.png.
+
 ## Decisions / pivots
 
 - 2026-06-14: API → local open models (ollama) for a *real* cutoff gap, zero API cost.

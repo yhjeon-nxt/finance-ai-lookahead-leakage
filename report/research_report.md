@@ -33,9 +33,12 @@ positive next-day prescience where the controls showed none, and — most tellin
 ahead of the 2024-08-05 crash it demonstrably remembers while showing no edge around the election
 it does not**. The regime-adjusted difference-in-differences is positive on every metric. Support
 for parametric leakage is **moderate and internally consistent**, though statistically modest at
-this sample size (cross-model p≈0.075). Separately, the probes show small open models also
-**confabulate** the period (inventing a false "March 2026 Fed hike"), a complementary practitioner
-hazard.
+this sample size (cross-model p≈0.075). **An independent-family co-treatment (`gemma3:12b`,
+official Aug-2024 cutoff) did *not* reproduce the clean signature** — it **confabulates** the
+period (projecting "Joe Biden" as the 2024 winner) rather than recalling it (the pre-registered
+H2). The two-family contrast yields the study's sharpest lesson: **a documented in-window cutoff
+is necessary but not sufficient for leakage — what matters is genuine recall, so each model must
+be probed, not assumed contaminated from its cutoff date.**
 
 ---
 
@@ -121,9 +124,10 @@ estimable foresight gap with an explicit no-memory counterfactual.
 
 | Group | Model | Window | Can know the window? | Role |
 |---|---|---|---|---|
-| **T-in** | treatment (2024-aware) | 2024-07-01…12-31 | **yes** | leakage candidate |
+| **T-in** | `qwen3:8b` (Qwen, 2024-aware) | 2024-07-01…12-31 | **yes (recalls)** | leakage candidate (family 1) |
+| **T2-in** | `gemma3:12b` (Google, Aug-2024 cutoff) | 2024-07-01…12-31 | **nominally** (confabulates) | independent-family co-treatment (§4.9) |
 | **C-A** | `llama3.1:8b` (cutoff 2023-12) | 2024-07-01…12-31 | no | model control |
-| **C-B** | treatment | 2026-01-01…05-31 | no (post-cutoff) | time control |
+| **C-B / C-B2** | treatment (qwen3 / gemma3) | 2026-01-01…05-31 | no (post-cutoff) | time control |
 
 The **T-in vs C-B** contrast holds the model fixed and varies only whether the traded window is
 in-distribution; it isolates leakage from raw capability. **C-A** corroborates with an
@@ -174,6 +178,13 @@ own account, has an ~April/July-2024 cutoff that misses the Aug-5 crash and the 
 gate correctly selected it. *Finding:* among the available open models, parametric coverage of a
 recent window is not monotonic in size — a reproducibility caution for anyone assuming a larger
 model is "more contaminated."
+
+We additionally ran **`gemma3:12b`** (Google; **officially documented Aug-2024 cutoff**) as an
+independent-family co-treatment (§4.9). Critically, its *documented* cutoff covers 2024-H2 but its
+*effective* recall does not: probed, it projects **"Joe Biden"** as the 2024 election winner and
+misattributes the Aug-5 crash — i.e. it **confabulates** the window. This dissociation between
+documented and effective cutoff (cf. *Dated Data*, §2b) is exactly why the leakage test must use
+*measured recall*, not model cards.
 
 **Finding already visible here:** parametric knowledge of the test window is *real but uneven* —
 market facts surface, politically-sensitive facts are suppressed by alignment, and models'
@@ -337,12 +348,11 @@ window (same metric, 98 valid pseudo-events):
 | Group | Observed Aug-5 de-risk | Null mean ± σ | Empirical p (one-sided) |
 |---|---|---|---|
 | **T-in** (knows the crash) | **+0.115** | +0.001 ± 0.065 | **0.051** |
-| C-A (control) | (aggregation-unstable) | −0.007 ± **0.194** | 0.31 |
+| C-A (control) | −0.125 (*increased* risk) | +0.002 ± 0.109 | 0.92 |
 
-The treatment's de-risking into the crash is in the **top ~5%** of random-timing outcomes and is
-**stable across aggregation methods**; the control produces no calibrated de-risk signal and its
-pre-event exposure is dominated by noise (null σ ≈ 3× larger). This directly answers the
-"pre-event timing has no null distribution" critique.
+The treatment's de-risking into the crash is in the **top ~5%** of random-timing outcomes; the
+control did the **opposite** — it carried *more* risk than usual into the crash (p=0.92, i.e. far
+from any de-risk). This directly answers the "pre-event timing has no null distribution" critique.
 
 ![Exposure timeline](figures/exposure_timeline_2024H2.png)
 
@@ -373,6 +383,48 @@ prescience (`figures/ticker_prescience.png`) is noisier (n≈127/ticker) but the
 positive values concentrate on the AI/election-sensitive names (COIN +0.12, IWM +0.10,
 NVDA/JPM ≈ +0.03), whereas the control is mostly ≤0.
 
+### 4.9 Independent-family test (Gemma 3 12B): a non-replication that sharpens the thesis
+
+To break the treatment/control family confound, we re-ran the full pipeline with **`gemma3:12b`**
+(Google; **official Aug-2024 cutoff**, an independent architecture and training corpus) as a
+second treatment, same `llama3.1:8b` control and a `gemma3:12b` 2026 OOD arm. **The clean leakage
+signature did *not* replicate** — the pre-registered **H2** outcome — and the reason is
+diagnostic.
+
+**Gemma confabulates the period despite an in-window cutoff.** Its cutoff probe:
+*"As of today, November 7, 2024, **Joe Biden** has been projected to win"* (wrong — and Biden was
+not a candidate) and it misattributes the Aug-5 crash to *"a hotter-than-expected jobs report"*
+(backwards). So although its documented cutoff covers 2024-H2, it does **not genuinely recall**
+the period — unlike `qwen3:8b`, which correctly recalled the Aug-5 yen-carry crash and the NVIDIA
+split.
+
+**Cross-family comparison (treatment, in-distribution):**
+
+| Metric | `qwen3:8b` (recalls 2024-H2) | `gemma3:12b` (confabulates) |
+|---|---|---|
+| In-dist Sharpe | **1.76** | 0.75 |
+| In-dist total return | +0.251 | +0.041 |
+| OOD (C-B) Sharpe | +0.49 | −0.63 |
+| Exposure-timing prescience | +0.054 | +0.025 |
+| T-in vs C-A permutation p | 0.075 | **0.221 (n.s.)** |
+| Regime-adjusted DiD (exposure timing) | +0.136 | +0.092 |
+| Aug-5 crash de-risk (pseudo-event p) | +0.115 (p=0.051) | +0.004 (**p=0.54**) |
+
+![Cross-family comparison](figures/cross_family_comparison.png)
+
+*Both treatments, in-distribution. Gemma is same-signed but much weaker on every leakage metric.*
+
+![Gemma equity by date](figures/equity_gemma_bydate.png)
+
+**Reading.** Gemma's signal is *directionally* consistent (in-dist Sharpe > OOD; positive DiD)
+but **weak and non-significant** (p=0.22), with **no crash de-risk** (p=0.54) and a generally
+cash-heavy, low-turnover book. It does not reproduce the qwen3 signature. This is the strongest
+result in the study: **a documented, in-window knowledge cutoff is *necessary but not sufficient*
+for parametric leakage — what matters is whether the model *genuinely recalls* the period.**
+`qwen3:8b` recalls and leaks; `gemma3:12b` confabulates and does not. The leakage we measure is
+therefore **model-specific, not a mechanical consequence of the cutoff date** — which makes
+per-model probing (not model-card cutoffs) the operative safeguard.
+
 ## 5. Discussion & Forensic Analysis
 
 ### 5.1 The cutoff probe is itself forensic evidence
@@ -393,7 +445,12 @@ The evidence triangulates:
 3. **Regime is ruled out.** The DiD against a no-memory momentum agent is positive on every
    metric, and the baseline's own in-dist−OOD gap is negative — the 2024-vs-2026 regime works
    *against* the result.
-4. **Honesty about strength.** Significance is marginal (cross-model p≈0.075) to non-significant
+4. **Cross-family dependence (pre-registered H2 on family 2).** The signature did **not** cleanly
+   replicate on `gemma3:12b` (§4.9): in-dist Sharpe 0.75, no crash de-risk (p=0.54), weak/ns DiD.
+   The reason is diagnostic — Gemma *confabulates* 2024-H2 (projects "Biden" as winner) despite an
+   official Aug-2024 cutoff. So the leakage is **model-specific**: present where recall is genuine
+   (Qwen3), absent where the model confabulates (Gemma). An in-window cutoff alone predicts neither.
+5. **Honesty about strength.** Significance is marginal (cross-model p≈0.075) to non-significant
    (within-model p≈0.40) at this sample size. We therefore report *moderate* support, not proof,
    and identify a multi-period within-backbone design (more in-dist/OOD windows, averaging over
    regimes) as the natural power-increasing follow-up.
@@ -422,10 +479,13 @@ the former produces unfalsifiable, plausible-sounding rationales that can drive 
 - **Statistical power.** ~100–250 trading days per cell; the cross-model contrast is marginal
   (p≈0.075) and the single-pair within-model contrast is non-significant (p≈0.40). We report
   *moderate* support; the multi-period pass (§4.7-adjacent / §4.8) is the power remedy.
-- **One treatment family.** Results rest on the Qwen3 backbone; an independent-family
-  co-treatment (e.g. Gemma 3 12B, official Aug-2024 cutoff) is the highest-value extension to
-  break the family confound and test replication. We do **not** use a proprietary API model
-  (GPT-4o/Claude) as it would forfeit the controllable-cutoff, reproducible, zero-cost design.
+- **Family dependence (tested).** We ran an independent-family co-treatment (`gemma3:12b`,
+  official Aug-2024 cutoff, §4.9). It did **not** reproduce the clean signature — it *confabulates*
+  the period rather than recalling it (pre-registered H2). So the leakage is **demonstrated on
+  Qwen3 but is not a universal property of any in-window cutoff**; characterising *which*
+  families/training mixtures yield genuine recall (and hence leakage) vs confabulation is the
+  natural follow-up. We do **not** use a proprietary API model (GPT-4o/Claude) as it would forfeit
+  the controllable-cutoff, reproducible, zero-cost design.
 - **Small open models confabulate**, so absence of explicit rationale tells is expected; leakage
   here is behavioural. Behaviour-independent membership-inference/perplexity probes are future work.
 - **Single asset universe / daily cadence / long-only.** Generalisation to other universes,
@@ -434,7 +494,10 @@ the former produces unfalsifiable, plausible-sounding rationales that can drive 
 ## 6. Conclusion & Robust-Backtesting Standards
 
 Parametric look-ahead leakage is a first-class threat to LLM-agent backtests, invisible to the
-chronological-split discipline the field currently relies on. We recommend:
+chronological-split discipline the field currently relies on. It is, however, **model-specific**:
+of two open models with in-window cutoffs, one (Qwen3 8B) genuinely recalled the period and traded
+on it, while the other (Gemma 3 12B) *confabulated* it and showed no clean leakage — so a
+documented cutoff predicts neither. This makes per-model probing non-negotiable. We recommend:
 
 1. **Probe before you backtest.** Empirically verify each model's knowledge of the test window
    (as in §3.3–3.4); never trust documented cutoffs.
@@ -457,8 +520,10 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
 `python -m leakage.run.main`.
 
 **Load-bearing settings (fix these to reproduce):**
-- **Models:** treatment `qwen3:8b`, control `llama3.1:8b` (ollama 0.30.8); treatment auto-selected
-  by the gated probe among `{qwen3:32b, qwen3:8b}`.
+- **Models:** treatments `qwen3:8b` **and `gemma3:12b`** (independent-family co-treatment, §4.9),
+  control `llama3.1:8b` (ollama 0.30.8); Qwen treatment auto-selected by the gated probe among
+  `{qwen3:32b, qwen3:8b}`; Gemma run via `LEAKAGE_FORCE_TREATMENT=gemma3:12b` (artifacts in
+  `results/gemma/`).
 - **Inference:** `format=json`, **`think=False`** (mandatory for qwen3 — see Appendix B),
   `temperature=0.7`, `num_predict=700`, `seed ∈ {0,1,2}`; 600 s client timeout for 32B cold-loads.
 - **Universe:** SPY, QQQ, NVDA, TSLA, JPM, IWM, COIN; daily rebalance; long-only; 60-day trailing
@@ -467,8 +532,8 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
   2026 Q1/Q2). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
 - **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
   + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
-  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $0.8 (incl. 3 aborted
-  boots that each self-terminated cleanly).
+  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $1.4 (qwen3 run ≈ $0.8
+  incl. 3 aborted boots that each self-terminated cleanly; Gemma co-treatment run ≈ $0.6).
 - **Stats:** seed-averaged per-day prescience contributions; circular block bootstrap + permutation
   tests; pseudo-event null with 98 random pseudo-events.
 

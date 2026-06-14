@@ -1,0 +1,187 @@
+{
+  "tag": "gemma",
+  "groups": {
+    "C-A": {
+      "model": "llama3.1:8b",
+      "financial": {
+        "total_return": 0.04308614414858569,
+        "ann_return": 0.11154467273867108,
+        "ann_vol": 0.2397324842810856,
+        "sharpe": 0.2991828432203367,
+        "max_drawdown": -0.15175479429362917,
+        "n_days": 127.0,
+        "turnover": 0.8798978446597495
+      },
+      "prescience": {
+        "ticker_prescience": -0.032177071700391406,
+        "exposure_timing": -0.07106651213425401,
+        "conf_weighted_timing": -0.03684575532555569
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": -0.12466666666666666,
+        "us_election_trump_trade": 0.05999999999999998,
+        "event_timing_mean": -0.032333333333333346
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.02973343555441993,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.011913120889923754,
+        "us_election_trump_trade_port_ret": 0.0685017551835195,
+        "us_election_trump_trade_excess_vs_mkt": -0.03504152772017261
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 64,
+          "rally": 5,
+          "rebound": 6,
+          "correction": 11,
+          "surge": 2,
+          "downturn": 5
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "C-B": {
+      "model": "gemma3:12b",
+      "financial": {
+        "total_return": -0.014131918400128507,
+        "ann_return": -0.03477496560696144,
+        "ann_vol": 0.054652123960467536,
+        "sharpe": -0.6277502587297737,
+        "max_drawdown": -0.045139597416650044,
+        "n_days": 101.0,
+        "turnover": 0.24560000000000004
+      },
+      "prescience": {
+        "ticker_prescience": -0.008745505508740795,
+        "exposure_timing": -0.02564046774003199,
+        "conf_weighted_timing": -0.023438394798680512
+      },
+      "pre_event_timing": {},
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 66,
+          "rally": 12,
+          "rebound": 3,
+          "downturn": 2
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "T-in": {
+      "model": "gemma3:12b",
+      "financial": {
+        "total_return": 0.0413477064540441,
+        "ann_return": 0.08447884535102561,
+        "ann_vol": 0.11462048393197548,
+        "sharpe": 0.7498485094153747,
+        "max_drawdown": -0.060045302261259814,
+        "n_days": 127.0,
+        "turnover": 0.26470899470899467
+      },
+      "prescience": {
+        "ticker_prescience": -0.02390860124533187,
+        "exposure_timing": 0.02458230387364685,
+        "conf_weighted_timing": 0.021917394206744805
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.0035833333333333364,
+        "us_election_trump_trade": 0.14041666666666666,
+        "event_timing_mean": 0.072
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.007683432933771064,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.033963123510572624,
+        "us_election_trump_trade_port_ret": 0.023604285489910073,
+        "us_election_trump_trade_excess_vs_mkt": -0.07993899741378205
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {
+          "election": 1
+        },
+        "soft_tell_counts": {
+          "volatility": 77,
+          "rally": 8,
+          "downturn": 4,
+          "rebound": 4
+        },
+        "n_hard_decisions": 1
+      },
+      "forensic_excerpts": [
+        {
+          "date": "2024-10-17",
+          "hard_tells": [
+            "election"
+          ],
+          "future_months": [],
+          "text": "The portfolio experienced a loss yesterday despite minimal market movement overall, indicating poor stock selection. Given the low current allocation and recent volatility, I will increase exposure to higher-conviction names while maintaining a cautious stance. NVDA's relative strength and positive momentum warrant a larger position. Increasing exposure to NVDA based on its recent price action and"
+        }
+      ],
+      "n_parse_fail": 0
+    }
+  },
+  "comparisons": {
+    "T-in_vs_C-A": {
+      "T-in_timing_prescience": {
+        "point": 0.024582303873646835,
+        "lo": -0.08693668529504824,
+        "hi": 0.15878711222701658,
+        "p_gt_0": 0.367,
+        "n": 127
+      },
+      "C-A_timing_prescience": {
+        "point": -0.07106651213425397,
+        "lo": -0.18017440456407197,
+        "hi": 0.030740311724037437,
+        "p_gt_0": 0.9053333333333333,
+        "n": 127
+      },
+      "permutation_diff": {
+        "diff": 0.0956488160079008,
+        "p_value": 0.22095580883823235
+      }
+    },
+    "T-in_vs_C-B": {
+      "T-in_timing_prescience": {
+        "point": 0.024582303873646835,
+        "lo": -0.08693668529504824,
+        "hi": 0.15878711222701658,
+        "p_gt_0": 0.367,
+        "n": 127
+      },
+      "C-B_timing_prescience": {
+        "point": -0.025640467740032005,
+        "lo": -0.11505161562165793,
+        "hi": 0.06960643211400695,
+        "p_gt_0": 0.7056666666666667,
+        "n": 101
+      },
+      "permutation_diff": {
+        "diff": 0.05022277161367884,
+        "p_value": 0.5188962207558488
+      }
+    }
+  },
+  "foresight_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": -0.015163095736591076,
+    "gap_exposure_timing": 0.05022277161367884,
+    "gap_conf_weighted_timing": 0.04535578900542532
+  },
+  "regime_baseline_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": -0.020799751426403845,
+    "gap_exposure_timing": -0.042221065726428066,
+    "gap_conf_weighted_timing": -0.044962085737358944
+  },
+  "foresight_gap_DiD": {
+    "gap_ticker_prescience": 0.0056366556898127685,
+    "gap_exposure_timing": 0.09244383734010692,
+    "gap_conf_weighted_timing": 0.09031787474278427
+  },
+  "DiD_note": "Leakage is supported only if the LLM in-dist\u2212OOD gap EXCEEDS the no-memory momentum baseline's gap (DiD > 0)."
+}

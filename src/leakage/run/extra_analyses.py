@@ -34,6 +34,8 @@ def _exposure_panel(group: str) -> pd.DataFrame:
     """date x seed exposure panel for a group (parse_ok days only)."""
     cols = {}
     for f in sorted(DEC_DIR.glob(f"{group}_*_seed*.jsonl")):
+        if "mock" in f.stem:   # exclude the no-memory baseline files (real runs only)
+            continue
         seed = f.stem.split("seed")[-1]
         rows = {}
         for line in f.read_text().splitlines():

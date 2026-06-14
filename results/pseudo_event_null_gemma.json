@@ -1,10 +1,10 @@
 {
   "T-in": {
     "group": "T-in",
-    "observed_derisk": 0.115,
-    "null_mean": 0.0012,
-    "null_std": 0.0647,
-    "p_value": 0.051,
+    "observed_derisk": 0.0036,
+    "null_mean": -0.0009,
+    "null_std": 0.1243,
+    "p_value": 0.5408,
     "n_null": 98
   },
   "C-A": {
