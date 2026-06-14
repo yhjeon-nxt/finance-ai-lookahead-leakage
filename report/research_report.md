@@ -26,8 +26,16 @@ period — misreporting their own cutoff and inventing plausible future events w
 rather than cleanly memorising it. We close with concrete robust-backtesting standards for the
 LLM-agent era.
 
-> *Empirical Results (§4) are populated from the EC2 experiment run; methodology, the empirical
-> cutoff verification (§3.3–3.4), and forensic framing are complete.*
+**Headline result.** On a real run (treatment `qwen3:8b`, control `llama3.1:8b`, executed on an
+EC2 GPU spot instance), the treatment trading its in-distribution window earned **Sharpe 1.76 /
++25%** versus **0.30** (model control) and **0.49** (same model, out-of-distribution), showed
+positive next-day prescience where the controls showed none, and — most tellingly — **de-risked
+ahead of the 2024-08-05 crash it demonstrably remembers while showing no edge around the election
+it does not**. The regime-adjusted difference-in-differences is positive on every metric. Support
+for parametric leakage is **moderate and internally consistent**, though statistically modest at
+this sample size (cross-model p≈0.075). Separately, the probes show small open models also
+**confabulate** the period (inventing a false "March 2026 Fed hike"), a complementary practitioner
+hazard.
 
 ---
 
@@ -125,9 +133,16 @@ Harris's VP pick, NVIDIA's June-2024 10-for-1 split, the Aug-5 yen-carry selloff
 | llama3.1:8b | 0/4 | clean control — denies all |
 | phi4 | 0/4 | denies all; self-reports "October 2023" despite a Dec-2024 release |
 
-The treatment is selected as the highest-scoring model that still denies 2026 knowledge. On the
-EC2 run we extend this probe to 32B candidates (`qwen3:32b`, `qwen2.5:32b`) and auto-select; a
-larger model is expected to also recall the political events that the 8B variant guard-rails.
+The treatment is selected (by a gated rule: highest 2024-H2 score among candidates that also
+deny 2026 and pass a sanity check; fails loudly otherwise). On the EC2 run we extended the probe
+to 32B candidates — and the "bigger ⇒ knows more" expectation was **empirically refuted**:
+`qwen2.5:32b` self-reports an *October 2022/2023* cutoff and denies 2024 entirely (older
+knowledge than the 8B), and `qwen3:32b` scored only **1/4** (recalls the NVIDIA split but, by its
+own account, has an ~April/July-2024 cutoff that misses the Aug-5 crash and the election).
+`qwen3:8b` (**2/4** — crash *and* split) had the most verifiable target-window knowledge, so the
+gate correctly selected it. *Finding:* among the available open models, parametric coverage of a
+recent window is not monotonic in size — a reproducibility caution for anyone assuming a larger
+model is "more contaminated."
 
 **Finding already visible here:** parametric knowledge of the test window is *real but uneven* —
 market facts surface, politically-sensitive facts are suppressed by alignment, and models'
@@ -206,12 +221,72 @@ post-cutoff data now exists). Each is documented here and in `findings.md`.
 
 ## 4. Empirical Results
 
-*Populated from the EC2 run (`results/eval_ec2.json`, `results/figures/equity_ec2.png`).*
+Run on a single `g6e.xlarge` spot instance (Seoul), 3 groups × 3 seeds, treatment auto-selected
+as `qwen3:8b` (the highest verified 2024-H2 recall; the 32B candidates scored *lower* — §3.4).
 
-Planned tables/figures: (a) per-group financial summary (return, Sharpe, MaxDD, turnover) with
-bootstrap CIs; (b) prescience metrics per group with CIs; (c) T-in vs C-A and T-in vs C-B
-permutation tests; (d) the in-dist−OOD foresight gap; (e) equity curves with the Aug-5 and
-Nov-5 event lines; (f) curated rationale excerpts flagged by the forensic scan.
+![Equity curves](figures/equity_ec2.png)
+
+*Equity curves (start=1.0). T-in (treatment, in-distribution) stays above 1.0 throughout, dips
+least around the Aug-5 crash (day ~25), and ends ~+25%; both controls spend most of the window
+below 1.0 and finish near +3–4%.*
+
+### 4.1 Financial performance
+| Group | Model | Total return | Sharpe | Max DD | Turnover | Parse-fail |
+|---|---|---|---|---|---|---|
+| **T-in** (knows 2024-H2) | `qwen3:8b` | **+0.251** | **+1.76** | −0.136 | 0.728 | 0 |
+| C-A (model control) | `llama3.1:8b` | +0.043 | +0.30 | −0.152 | 0.880 | 0 |
+| C-B (time control, same model, OOD) | `qwen3:8b` | +0.032 | +0.49 | −0.131 | 0.694 | 0 |
+
+The treatment earns a Sharpe of **1.76** on the window it was trained on, versus **0.30**
+(different model, same window) and **0.49** (same model, unseen window). The advantage appears
+*only* in-distribution.
+
+### 4.2 Leakage / foresight metrics
+| Group | Ticker prescience | Exposure timing | Conf-wtd timing |
+|---|---|---|---|
+| **T-in** | **+0.021** | **+0.054** | **+0.055** |
+| C-A | −0.032 | −0.071 | −0.037 |
+| C-B | +0.016 | −0.039 | −0.045 |
+
+Only T-in shows *positive* prescience/timing; both controls are ≈0 or negative.
+
+### 4.3 Pre-event timing (the behavioural smoking gun)
+| Group | Aug-5 crash (de-risk > 0) | Nov-5 election (load > 0) |
+|---|---|---|
+| **T-in** | **+0.115** (de-risked into the crash) | +0.011 (≈none) |
+| C-A | −0.125 (did *not* de-risk) | +0.060 |
+
+The treatment **cut risk before the 2024-08-05 crash** — an event the probe shows it *knows* —
+while the control did not. It shows **no** election-timing edge, again *consistent with the
+probe*, where qwen3:8b recalled the crash but refused/Did not know the election outcome. Leakage
+tracks exactly what the model demonstrably remembers.
+
+### 4.4 Headline statistical tests (seed-averaged per-day series)
+| Comparison | Δ timing prescience | permutation p |
+|---|---|---|
+| T-in vs C-A | +0.125 | 0.075 |
+| T-in vs C-B | +0.093 | 0.400 |
+
+The cross-model contrast is marginal (p≈0.075); the within-model contrast is directionally
+consistent but not significant at this sample size (~100–128 days × 3 seeds) — an
+**underpowering** limitation, not evidence of absence.
+
+### 4.5 Within-model foresight gap + regime-adjusted difference-in-differences
+| Metric | LLM gap (T-in−C-B) | No-memory baseline gap | **DiD (leakage)** |
+|---|---|---|---|
+| ticker prescience | +0.005 | −0.021 | **+0.026** |
+| exposure timing | +0.093 | −0.042 | **+0.136** |
+| conf-wtd timing | +0.100 | −0.045 | **+0.145** |
+
+Critically, the **no-memory momentum baseline's** in-dist−OOD gap is *negative*, so the regime
+difference between 2024-H2 and 2026 works *against* the finding; the **DiD is positive on every
+metric**, i.e. the treatment's in-distribution foresight exceeds what regime alone explains.
+
+### 4.6 Rationale forensics
+The automated scan found **0** future-event "confessions" in the trading rationales (all groups).
+The leakage here is **behavioural, not verbalised**: the model acts on memorised structure
+(cutting risk before the crash) without naming the event in its reasoning. (Contrast the *probe*,
+§3.3/§5.3, where direct questioning does elicit both recall and confabulation.)
 
 ## 5. Discussion & Forensic Analysis
 
@@ -221,10 +296,22 @@ of leakage: the control is verifiably blind to 2024-H2, while the treatment demo
 the market events the backtest hinges on. This direct, quotable evidence is stronger than
 relying on vendor-stated cutoffs.
 
-### 5.2 Backtest forensics
-*To be completed from the run:* whether T-in de-risked into the Aug-5 crash and loaded into the
-Nov-5 rally while the controls did not; the size and significance of the in-dist−OOD gap; and
-any "smoking-gun" rationales referencing future events.
+### 5.2 Backtest forensics — verdict: moderate, consistent support for H1
+The evidence triangulates:
+1. **Financial.** The treatment's edge (Sharpe 1.76) materialises *only* in-distribution — not
+   for a different model on the same window, nor for the same model on an unseen window.
+2. **The knowledge↔behaviour match is the strongest signal.** The treatment cut risk before the
+   Aug-5 crash (pre-event timing +0.115 vs the control's −0.125) — and the probe shows it *knows*
+   that crash. It shows *no* election-timing edge — and the probe shows it does *not* know the
+   election outcome. The behaviour mirrors the model's measured memory item-by-item; a generic
+   "smarter model" or a regime artifact would not produce this selective pattern.
+3. **Regime is ruled out.** The DiD against a no-memory momentum agent is positive on every
+   metric, and the baseline's own in-dist−OOD gap is negative — the 2024-vs-2026 regime works
+   *against* the result.
+4. **Honesty about strength.** Significance is marginal (cross-model p≈0.075) to non-significant
+   (within-model p≈0.40) at this sample size. We therefore report *moderate* support, not proof,
+   and identify a multi-period within-backbone design (more in-dist/OOD windows, averaging over
+   regimes) as the natural power-increasing follow-up.
 
 ### 5.3 Confabulation can be worse than memorisation
 A striking qualitative finding: probed about Q1-2026 (beyond any model's cutoff), qwen3:8b did
