@@ -87,10 +87,20 @@ test period. This project targets precisely that gap.
 | **C-B** | treatment | 2026-01-01…05-31 | no (post-cutoff) | time control |
 
 The **T-in vs C-B** contrast holds the model fixed and varies only whether the traded window is
-in-distribution; it is therefore the clean causal estimate of leakage, isolating it from raw
-capability. **C-A** corroborates with an independent, verifiably-ignorant model. The
-treatment/control model-family difference is a known confound for the C-A comparison; the
-within-model C-B comparison neutralises it.
+in-distribution; it isolates leakage from raw capability. **C-A** corroborates with an
+independent, verifiably-ignorant model. The treatment/control model-family difference is a known
+confound for the C-A comparison; the within-model C-B comparison neutralises it.
+
+**Regime confound and the difference-in-differences correction.** An adversarial review (§3.11)
+identified a first-order threat: the 2024-H2 and 2026 windows differ not only in whether the
+model has "seen" them but in *market regime* — notably next-day return autocorrelation
+(momentum-persistent vs mean-reverting). Because the agent is partly a trailing-return trader,
+its exposure-timing metric can be pushed positive or negative by regime alone, so a *raw*
+in-dist−OOD gap could arise even from a memoryless agent and be misread as leakage. We therefore
+do **not** interpret the raw gap as leakage. Instead we run an identical **no-memory momentum
+baseline** (the MockClient) over the same windows/seeds and report the **difference-in-differences**:
+`DiD = (LLM in-dist−OOD gap) − (no-memory in-dist−OOD gap)`. Leakage is supported only if
+`DiD > 0` (and significant); the baseline absorbs the pure regime effect.
 
 ### 3.3 Empirical cutoff verification (not just documented)
 
@@ -152,9 +162,29 @@ mock client was used to confirm the metrics return ≈0 under the null (they do)
 
 ### 3.8 Statistics
 
-Prescience is expressed as a per-day contribution `z(signal)·z(return)` (mean ≈ Pearson r), so
-it supports a **stationary block bootstrap** for CIs and a **label-permutation test** for group
-differences. We report effect sizes and 95% CIs, not just p-values, and pool ≥3 seeds.
+Prescience is expressed as a per-day contribution `z(signal)·z(return)` (mean ≈ Pearson r). To
+avoid pseudo-replication we **average the contribution across seeds per trading day** (one
+observation per day, not day×seed) before inference. We then use a **circular fixed-length block
+bootstrap** for CIs and a **label-permutation test** for group differences (the permutation test
+makes no block-length assumption and carries the headline inference). We report effect sizes and
+95% CIs, and treat the windows' modest sample sizes (~100–128 days) as a power limitation rather
+than over-claiming significance.
+
+### 3.11 Pre-run adversarial verification
+
+Before spending any compute on results, the full design and codebase were audited by a
+**multi-agent adversarial review** (7 independent reviewers — backtest mechanics, pipeline
+causality, metric validity, statistical rigor, design/confounds, agent/prompt neutrality, infra —
+each finding then re-checked by a skeptic instructed to *refute* it). Of 23 raw findings, 18 were
+confirmed and 5 refuted (e.g. the claim that treatment-model *selection* is circular was rejected:
+selecting a model that demonstrably knows the period and then testing whether it *trades on* that
+knowledge is sound). Confirmed issues were fixed before the run, including: the regime-confound
+DiD correction (§3.2), an off-by-one in the event-day market benchmark, seed pseudo-replication in
+the bootstrap/permutation tests, parse-failure days contaminating foresight metrics, denial
+phrases ("no information about the crash") being mis-counted as smoking guns, and an unsafe model
+auto-selection that ignored the OOD-denial gate. The full ledger is in `report/verification_findings.md`.
+This verification step is itself part of the contribution: LLM-agent experiments are easy to get
+subtly wrong, and adversarial pre-registration of the analysis materially hardened the conclusions.
 
 ### 3.9 Infrastructure & cost
 
