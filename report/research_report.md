@@ -255,11 +255,16 @@ post-cutoff data now exists). Each is documented here and in `findings.md`.
 Run on a single `g6e.xlarge` spot instance (Seoul), 3 groups × 3 seeds, treatment auto-selected
 as `qwen3:8b` (the highest verified 2024-H2 recall; the 32B candidates scored *lower* — §3.4).
 
-![Equity curves](figures/equity_ec2.png)
+![Equity by calendar date](figures/equity_ec2_bydate.png)
 
-*Equity curves (start=1.0). T-in (treatment, in-distribution) stays above 1.0 throughout, dips
-least around the Aug-5 crash (day ~25), and ends ~+25%; both controls spend most of the window
-below 1.0 and finish near +3–4%.*
+*Equity by calendar date (start=1.0). **Left (like-for-like, identical 2024-H2 dates):** the
+treatment (green, knows the period) tracks above the control (blue) through the Aug-5 crash and
+then **separates decisively at the Nov-5 election** (→1.25 vs 1.04). **Right:** the same model on
+the 2026 out-of-distribution window (orange) drifts and recovers to ~1.03. The treatment pulls
+away **only where it has memory** — a different model on the same dates (blue) and the same model
+on unseen dates (orange) both stay roughly flat. (An ordinal-axis overlay of all three is in
+`results/figures/equity_ec2.png`; the calendar-date split here is the honest comparison, since
+the only like-for-like pair is T-in vs C-A.)*
 
 ### 4.1 Financial performance
 | Group | Model | Total return | Sharpe | Max DD | Turnover | Parse-fail |
