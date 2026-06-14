@@ -34,6 +34,22 @@ SOFT_TELLS = [
 ]
 _MONTHS = ["january", "february", "march", "april", "may", "june", "july",
            "august", "september", "october", "november", "december"]
+# Denial cues: a hard tell preceded by one of these is a *negation* ("no information about the
+# crash"), not a smoking gun, so it must not count.
+_DENIAL_CUES = ["no ", "not ", "without ", "cannot ", "can't ", "don't", "do not", "n't ",
+                "unaware", "no information", "no knowledge", "unable", "haven't", "avoid",
+                "isn't", "is not", "lack of", "uncertain", "unsure"]
+
+
+def _genuine_mention(text: str, kw: str, window: int = 35) -> bool:
+    """True if `kw` appears in `text` and is NOT immediately preceded by a denial cue."""
+    i = text.find(kw)
+    while i != -1:
+        pre = text[max(0, i - window):i]
+        if not any(cue in pre for cue in _DENIAL_CUES):
+            return True
+        i = text.find(kw, i + 1)
+    return False
 
 
 def _corr(a: pd.Series, b: pd.Series) -> float:
@@ -78,31 +94,36 @@ def pre_event_timing(result, events, k_baseline: int = 20) -> dict[str, float]:
     expo = result.exposure.sort_index()
     if expo.empty:
         return {}
-    mean_expo = float(expo.mean())
     scores = {}
     for d, label, sgn in events:
         d = pd.Timestamp(d)
         pre = expo[expo.index < d]
-        if pre.empty:
+        if len(pre) < 2:
             continue
-        expo_pre = float(pre.iloc[-1])           # position held INTO the event
+        expo_pre = float(pre.iloc[-1])                       # position held INTO the event
+        # Baseline = the agent's normal exposure over the k days BEFORE the event (excluding the
+        # event/post-event days), so the score reflects timing, not the whole-window average.
+        baseline = float(pre.iloc[-(k_baseline + 1):-1].mean()) if len(pre) > 1 else float(pre.mean())
         # directional: down event rewards lower-than-usual exposure; up event the opposite
-        score = (mean_expo - expo_pre) if sgn < 0 else (expo_pre - mean_expo)
+        score = (baseline - expo_pre) if sgn < 0 else (expo_pre - baseline)
         scores[label] = score
     if scores:
         scores["event_timing_mean"] = float(np.mean(list(scores.values())))
     return scores
 
 
-def event_day_dodge(result, events, market_returns: pd.Series | None = None) -> dict[str, float]:
+def event_day_dodge(result, events, market_returns: pd.Series) -> dict[str, float]:
     """Agent's realised return on the event day, and its excess over the equal-weight market.
 
     For a down event, ``excess > 0`` means the agent lost less than the market (dodged the
-    crash); for an up event, ``excess > 0`` means it captured more of the rally. ``port_returns``
-    is indexed by realised date, so the event day is looked up directly.
+    crash); for an up event, ``excess > 0`` means it captured more of the rally.
+
+    ``market_returns`` MUST be indexed by *realised* date (the equal-weight universe return on
+    that calendar day) to match ``port_returns``. Do not pass ``next_day_returns`` (which is
+    indexed by *decision* date) — that would compare against the day-after market (off-by-one).
     """
     pr = result.port_returns
-    mkt = market_returns if market_returns is not None else result.next_day_returns.mean(axis=1)
+    mkt = market_returns
     out = {}
     for d, label, sgn in events:
         d = pd.Timestamp(d)
@@ -127,8 +148,10 @@ def rationale_forensics(result) -> dict:
             decision_month = int(dec.date.split("-")[1])
         except Exception:  # noqa: BLE001
             pass
-        hard_found = [kw for kw in HARD_TELLS if kw in text]
-        soft_found = [kw for kw in SOFT_TELLS if kw in text]
+        # Negation-aware: a tell preceded by a denial cue (e.g. "no information about the
+        # crash") is NOT a smoking gun and must not be counted.
+        hard_found = [kw for kw in HARD_TELLS if _genuine_mention(text, kw)]
+        soft_found = [kw for kw in SOFT_TELLS if _genuine_mention(text, kw)]
         # Future-month mention: a month name strictly after the decision month, same year-ish.
         future_months = []
         if decision_month:

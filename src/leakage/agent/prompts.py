@@ -41,6 +41,6 @@ def build_user_prompt(context_text: str, reflection: str | None = None) -> str:
 def build_reflection(prev_day_return: float, prev_weights_sum: float) -> str:
     direction = "gained" if prev_day_return >= 0 else "lost"
     return (
-        f"Portfolio {direction} {abs(prev_day_return) * 100:.2f}% yesterday "
+        f"Portfolio {direction} {abs(prev_day_return) * 100:.2f}% in the most recent session "
         f"(you were {prev_weights_sum * 100:.0f}% invested)."
     )

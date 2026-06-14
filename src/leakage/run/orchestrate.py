@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from leakage.agent.llm_client import MockClient, OllamaClient  # noqa: E402
 from leakage.backtest.engine import BacktestResult, run_backtest  # noqa: E402
-from leakage.config import EVENT_ANCHORS, GROUPS, RESULTS_DIR, SEEDS, Group  # noqa: E402
+from leakage.config import EVENT_ANCHORS, GROUPS, RESULTS_DIR, SEEDS, UNIVERSE, Group  # noqa: E402
+from leakage.data.ingest import load_prices  # noqa: E402
 from leakage.metrics import financial, leakage, stats  # noqa: E402
 
 FIG_DIR = RESULTS_DIR / "figures"
@@ -43,20 +44,46 @@ def run_experiment(seeds=SEEDS, mock=False, max_days=None,
 
 
 def _market_next(res: BacktestResult) -> pd.Series:
+    """Equal-weight next-day return, indexed by DECISION date (for prescience)."""
     return res.next_day_returns.mean(axis=1)
 
 
-def _pooled_timing_contrib(results_for_group: list[BacktestResult]) -> pd.Series:
-    """Concatenate per-day exposure-timing contributions across seeds for one group."""
-    parts = []
-    for r in results_for_group:
-        c = stats.prescience_contrib(r.exposure, _market_next(r))
-        if not c.empty:
-            parts.append(c.reset_index(drop=True))
-    return pd.concat(parts, ignore_index=True) if parts else pd.Series(dtype=float)
+def _market_realized(group_name: str) -> pd.Series:
+    """Equal-weight realised daily return, indexed by CALENDAR date (for event_day_dodge)."""
+    grp = next((g for g in GROUPS if g.name == group_name), None)
+    if grp is None:
+        return pd.Series(dtype=float)
+    df = load_prices(grp.window)
+    close = df["Close"] if "Close" in df.columns.get_level_values(0) else df
+    return close[UNIVERSE].pct_change().mean(axis=1)
 
 
-def evaluate(results: dict[tuple[str, int], BacktestResult], tag: str = "run") -> dict:
+def _mean_timing_contrib(results_for_group: list[BacktestResult]) -> pd.Series:
+    """Per-day exposure-timing contribution AVERAGED across seeds (one obs per trading day).
+
+    Averaging across seeds first (rather than pooling day*seed) avoids pseudo-replication:
+    pooling would treat correlated repeats of the same day as independent and understate the
+    variance of the bootstrap/permutation tests.
+    """
+    cols = [stats.prescience_contrib(r.exposure, _market_next(r)) for r in results_for_group]
+    cols = [c for c in cols if not c.empty]
+    if not cols:
+        return pd.Series(dtype=float)
+    return pd.concat(cols, axis=1).mean(axis=1)
+
+
+def _prescience_by_group(results, groups) -> dict:
+    """Seed-averaged prescience metrics per group (used for the real run and the mock baseline)."""
+    out = {}
+    for g in groups:
+        rs = [results[(g, s)] for s in sorted({s for gg, s in results if gg == g})]
+        p = [leakage.next_day_prescience(r) for r in rs]
+        out[g] = {k: float(np.nanmean([x[k] for x in p])) for k in p[0]}
+    return out
+
+
+def evaluate(results: dict[tuple[str, int], BacktestResult], tag: str = "run",
+             baseline_results: dict | None = None) -> dict:
     groups = sorted({g for g, _ in results})
     report: dict = {"tag": tag, "groups": {}}
 
@@ -71,7 +98,8 @@ def evaluate(results: dict[tuple[str, int], BacktestResult], tag: str = "run") -
         pre_evt = [leakage.pre_event_timing(r, EVENT_ANCHORS) for r in rs]
         pre_evt_mean = ({k: float(np.nanmean([p.get(k, np.nan) for p in pre_evt]))
                          for k in pre_evt[0]} if pre_evt and pre_evt[0] else {})
-        dodge = [leakage.event_day_dodge(r, EVENT_ANCHORS, _market_next(r)) for r in rs]
+        mkt_real = _market_realized(g)
+        dodge = [leakage.event_day_dodge(r, EVENT_ANCHORS, mkt_real) for r in rs]
         dodge_mean = ({k: float(np.nanmean([d.get(k, np.nan) for d in dodge]))
                        for k in dodge[0]} if dodge and dodge[0] else {})
         forensic = leakage.rationale_forensics(rs[0])  # representative seed
@@ -79,7 +107,7 @@ def evaluate(results: dict[tuple[str, int], BacktestResult], tag: str = "run") -
 
         fin_by_group[g] = fin_mean
         presc_by_group[g] = presc_mean
-        contrib_by_group[g] = _pooled_timing_contrib(rs)
+        contrib_by_group[g] = _mean_timing_contrib(rs)
         report["groups"][g] = {
             "model": rs[0].model,
             "financial": fin_mean,
@@ -91,23 +119,31 @@ def evaluate(results: dict[tuple[str, int], BacktestResult], tag: str = "run") -
             "n_parse_fail": n_parse_fail,
         }
 
-    # Headline comparisons (timing prescience): T-in vs C-A, T-in vs C-B.
+    # Headline comparisons on the seed-averaged per-day series (no pseudo-replication).
     report["comparisons"] = {}
     for a, b in [("T-in", "C-A"), ("T-in", "C-B")]:
         if a in contrib_by_group and b in contrib_by_group:
-            ci_a = stats.block_bootstrap_mean_ci(contrib_by_group[a])
-            ci_b = stats.block_bootstrap_mean_ci(contrib_by_group[b])
-            perm = stats.permutation_diff(contrib_by_group[a], contrib_by_group[b])
             report["comparisons"][f"{a}_vs_{b}"] = {
-                f"{a}_timing_prescience": ci_a,
-                f"{b}_timing_prescience": ci_b,
-                "permutation_diff": perm,
+                f"{a}_timing_prescience": stats.block_bootstrap_mean_ci(contrib_by_group[a]),
+                f"{b}_timing_prescience": stats.block_bootstrap_mean_ci(contrib_by_group[b]),
+                "permutation_diff": stats.permutation_diff(contrib_by_group[a], contrib_by_group[b]),
             }
 
-    # Foresight gap (same model, in-dist vs OOD).
+    # Foresight gap (same model, in-dist vs OOD) + difference-in-differences vs a no-memory
+    # baseline to NET OUT the regime/autocorrelation confound between the two windows.
     if "T-in" in presc_by_group and "C-B" in presc_by_group:
-        report["foresight_gap_Tin_minus_CB"] = leakage.foresight_gap(
-            presc_by_group["T-in"], presc_by_group["C-B"])
+        real_gap = leakage.foresight_gap(presc_by_group["T-in"], presc_by_group["C-B"])
+        report["foresight_gap_Tin_minus_CB"] = real_gap
+        if baseline_results is not None:
+            base_presc = _prescience_by_group(baseline_results, groups)
+            if "T-in" in base_presc and "C-B" in base_presc:
+                base_gap = leakage.foresight_gap(base_presc["T-in"], base_presc["C-B"])
+                report["regime_baseline_gap_Tin_minus_CB"] = base_gap
+                report["foresight_gap_DiD"] = {
+                    k: (real_gap.get(k, float("nan")) - base_gap.get(k, float("nan")))
+                    for k in real_gap if k in base_gap}
+                report["DiD_note"] = ("Leakage is supported only if the LLM in-dist−OOD gap "
+                                      "EXCEEDS the no-memory momentum baseline's gap (DiD > 0).")
 
     _plot_equity(results, groups, tag)
     out = RESULTS_DIR / f"eval_{tag}.json"

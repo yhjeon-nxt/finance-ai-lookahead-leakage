@@ -75,7 +75,14 @@ def probe(models: list[str]) -> dict:
             print(f"  [{pid}] {'✓' if rec[pid]['score'] else '✗'} {ans[:90]}")
         ans = _ask(m, OOD_DENY[1])
         rec["q1_2026_answer"] = ans
-        print(f"  [q1_2026] {ans[:130]}")
+        # A valid treatment must DENY specific 2026 knowledge (else C-B is not truly OOD for it).
+        al = ans.lower()
+        rec["denies_2026"] = (any(c in al for c in (
+            "don't know", "do not know", "not aware", "unable", "cannot", "can't",
+            "no specific", "i don't have", "as of my", "unsure", "not sure",
+            "no information", "haven't")) and not ans.startswith("[error"))
+        rec["sanity_ok"] = bool(rec.get(SANITY[0], {}).get("score", 0))
+        print(f"  [q1_2026 denies={rec['denies_2026']}] {ans[:120]}")
         rec["max_2024H2"] = len(DISCRIMINATORS)
         out[m] = rec
     path = RESULTS_DIR / "model_selection.json"
@@ -87,10 +94,23 @@ def probe(models: list[str]) -> dict:
     return out
 
 
-def pick_best(models: list[str]) -> str:
-    """Probe candidates and return the tag with the highest 2024-H2 recall (ties: first given)."""
+def pick_best(models: list[str], min_score: int = 2) -> str:
+    """Select the treatment model: highest 2024-H2 recall among candidates that ALSO deny 2026
+    knowledge and pass the sanity probe, with score >= min_score. Fails loudly otherwise so a
+    broken/non-functional model can never be silently promoted to the treatment slot.
+    """
     res = probe(models)
-    best = max(models, key=lambda m: res[m]["score_2024H2"])
+    eligible = [m for m in models
+                if res[m].get("denies_2026") and res[m].get("sanity_ok")
+                and res[m]["score_2024H2"] >= min_score]
+    if not eligible:
+        raise RuntimeError(
+            "No candidate qualifies as treatment (need score_2024H2>="
+            f"{min_score}, denies_2026, sanity_ok). Scores: "
+            + ", ".join(f"{m}={res[m]['score_2024H2']}/4 "
+                        f"deny={res[m].get('denies_2026')} sane={res[m].get('sanity_ok')}"
+                        for m in models))
+    best = max(eligible, key=lambda m: res[m]["score_2024H2"])
     (RESULTS_DIR / "treatment_model.txt").write_text(best)
     return best
 

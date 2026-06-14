@@ -50,14 +50,20 @@ nohup ollama serve >/var/log/ollama.log 2>&1 &
 for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sleep 2; done
 
 # --- models: control + candidate treatments (selection happens after code) --
+# qwen3:8b is included as a known-eligible fallback (locally verified: 2/4, denies 2026, sane).
 ollama pull llama3.1:8b
 ollama pull qwen3:32b
 ollama pull qwen2.5:32b
+ollama pull qwen3:8b
 
 # --- code + prepared data from S3 ------------------------------------------
 mkdir -p "$WORKDIR" && cd "$WORKDIR"
 aws s3 cp "s3://$S3_BUCKET/$S3_PREFIX/code/leakage_src.tar.gz" . && tar xzf leakage_src.tar.gz
 aws s3 sync "s3://$S3_BUCKET/$S3_PREFIX/data/" "$WORKDIR/data/" || true   # cached prices
+# Hard precondition: the prepared parquets MUST be present, else the run would silently fall
+# back to live yfinance on EC2 (different/blocked data). Fail loudly (trap self-terminates).
+test -f "$WORKDIR/data/raw/prices_2024H2.parquet" || { echo "MISSING prices_2024H2.parquet"; exit 2; }
+test -f "$WORKDIR/data/raw/prices_2026JanMay.parquet" || { echo "MISSING prices_2026JanMay.parquet"; exit 2; }
 pip3 install -r requirements.txt
 
 # --- run (resumable) + stream results --------------------------------------
@@ -65,10 +71,13 @@ sync_results() { aws s3 sync "$WORKDIR/results/" "s3://$S3_BUCKET/$S3_PREFIX/$RU
 ( while true; do sync_results; sleep 60; done ) &
 RESYNC_PID=$!
 
-# Empirically select the treatment model: highest verified 2024-H2 factual recall.
+# Empirically select the treatment model: highest verified 2024-H2 recall among candidates that
+# also deny 2026 knowledge + pass sanity (pick_best fails loudly if none qualify). qwen3:8b is a
+# guaranteed-eligible fallback so the bigger models are preferred only when they actually qualify.
 export LEAKAGE_CONTROL_MODEL=llama3.1:8b
-TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen2.5:32b 2>>"$LOG" | tail -1)
-echo "selected treatment model: $TREAT"
+TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen2.5:32b qwen3:8b 2>>"$LOG" | tail -1)
+echo "selected treatment model: '$TREAT'"
+[ -n "$TREAT" ] || { echo "treatment selection produced no model — aborting"; exit 3; }
 export LEAKAGE_TREATMENT_MODEL="$TREAT"
 export LEAKAGE_TREATMENT_CUTOFF="2024+ (auto-selected)"
 

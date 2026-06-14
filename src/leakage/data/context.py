@@ -44,10 +44,16 @@ def build_context(window: Window, day: pd.Timestamp,
     if hist.empty:
         raise ValueError(f"No price history up to {day}")
 
-    # Causality guard: nothing dated after the decision day may enter the context.
+    # Causality guard. `loc[:day]` already excludes future rows, so `max <= day` is necessary
+    # but tautological. The substantive guard is that the context must NOT reach the day whose
+    # return realises the decision (day+1): if it did, the agent would see its own outcome.
+    full = close.index
+    pos = full.get_loc(full[full <= day][-1])
+    realize_day = full[pos + 1] if pos + 1 < len(full) else None
     assert hist.index.max() <= day, (
-        f"LEAKAGE: context for {day.date()} contains data dated {hist.index.max().date()}"
-    )
+        f"LEAKAGE: context for {day.date()} contains data dated {hist.index.max().date()}")
+    assert realize_day is None or hist.index.max() < realize_day, (
+        f"LEAKAGE: context for {day.date()} reaches the realization day {realize_day}")
 
     rets = hist.pct_change()
     feats = pd.DataFrame(index=UNIVERSE)

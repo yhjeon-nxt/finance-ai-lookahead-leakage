@@ -11,6 +11,7 @@ are interchangeable.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 
@@ -91,7 +92,10 @@ class MockClient(LLMClient):
 
     def complete(self, system: str, user: str, *, temperature: float, seed: int) -> LLMResponse:
         # Parse the rendered context out of the user prompt: the recent-returns block.
-        rng = np.random.default_rng(seed + abs(hash(user)) % (2**31))
+        # Stable cross-process hash (Python's hash() is salted per process) so the mock null
+        # baseline is reproducible and resume-safe — it is the regime-confound reference.
+        digest = int.from_bytes(hashlib.sha256(user.encode()).digest()[:8], "big")
+        rng = np.random.default_rng(seed + digest % (2**31))
         tickers, mom = _parse_recent_momentum(user)
         if not tickers:
             return LLMResponse(text=json.dumps({"target_weights": {}, "confidence": 0.1,

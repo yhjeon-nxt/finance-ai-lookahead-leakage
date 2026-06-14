@@ -25,7 +25,12 @@ def prescience_contrib(signal: pd.Series, target: pd.Series) -> pd.Series:
 
 
 def _block_indices(n: int, block: int, rng: np.random.Generator) -> np.ndarray:
-    """Stationary/circular block bootstrap row indices covering ~n samples."""
+    """Circular fixed-length block bootstrap row indices covering ~n samples.
+
+    (A true *stationary* bootstrap would draw geometric-length blocks; we use fixed-length
+    circular blocks, which still preserve short-range autocorrelation. Inference is corroborated
+    by the permutation test, which makes no block-length assumption.)
+    """
     idx = []
     while len(idx) < n:
         start = int(rng.integers(0, n))

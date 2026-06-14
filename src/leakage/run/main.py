@@ -28,6 +28,8 @@ def main():
     ap.add_argument("--tag", default="real")
     ap.add_argument("--ollama-host", default=None)
     ap.add_argument("--skip-probe", action="store_true")
+    ap.add_argument("--no-baseline", action="store_true",
+                    help="skip the no-memory mock baseline (disables the regime DiD)")
     ap.add_argument("--no-s3", action="store_true")
     args = ap.parse_args()
 
@@ -37,7 +39,11 @@ def main():
 
     results = run_experiment(seeds=args.seeds, mock=False, max_days=args.max_days,
                              ollama_host=args.ollama_host)
-    report = evaluate(results, tag=args.tag)
+    # No-memory momentum baseline on the SAME windows/seeds → nets out the regime/autocorrelation
+    # confound between 2024-H2 and 2026 via difference-in-differences (see verification finding #1).
+    baseline = None if args.no_baseline else run_experiment(
+        seeds=args.seeds, mock=True, max_days=args.max_days)
+    report = evaluate(results, tag=args.tag, baseline_results=baseline)
 
     print("\n================ RESULTS ================")
     for g, blk in report["groups"].items():
@@ -49,6 +55,11 @@ def main():
     for name, c in report.get("comparisons", {}).items():
         print(f"  {name}: permutation p={c['permutation_diff']['p_value']:.3f} "
               f"diff={c['permutation_diff']['diff']:+.4f}")
+    if "foresight_gap_DiD" in report:
+        print("  regime-adjusted foresight gap (DiD = LLM gap − no-memory baseline gap):")
+        print(f"    real_gap={report['foresight_gap_Tin_minus_CB']}")
+        print(f"    base_gap={report.get('regime_baseline_gap_Tin_minus_CB')}")
+        print(f"    DiD={report['foresight_gap_DiD']}")
 
     if not args.no_s3:
         from leakage.config import RESULTS_DIR

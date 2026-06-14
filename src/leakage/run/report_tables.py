@@ -64,11 +64,17 @@ def render(tag: str) -> str:
             L.append(f"| {name.replace('_',' ')} | {_f(perm['diff'],4)} | {perm['p_value']:.3f} |")
 
     if "foresight_gap_Tin_minus_CB" in rep:
-        L.append("\n### 4.5 Within-model foresight gap (T-in − C-B, same model)\n")
-        gap = rep["foresight_gap_Tin_minus_CB"]
-        L.append("| Metric | Gap |\n|---|---|")
-        for k, v in gap.items():
-            L.append(f"| {k} | {_f(v)} |")
+        L.append("\n### 4.5 Within-model foresight gap + regime-adjusted DiD\n")
+        L.append("Leakage is supported only if the LLM in-dist−OOD gap EXCEEDS the no-memory "
+                 "momentum baseline's gap (DiD > 0); a raw gap alone can arise from the "
+                 "2024-H2-vs-2026 regime difference.\n")
+        real = rep["foresight_gap_Tin_minus_CB"]
+        base = rep.get("regime_baseline_gap_Tin_minus_CB", {})
+        did = rep.get("foresight_gap_DiD", {})
+        L.append("| Metric | LLM gap | Regime baseline gap | **DiD (leakage)** |")
+        L.append("|---|---|---|---|")
+        for k in real:
+            L.append(f"| {k} | {_f(real[k])} | {_f(base.get(k))} | **{_f(did.get(k))}** |")
 
     L.append("\n### 4.6 Rationale forensics (smoking-gun scan)\n")
     for k in groups:

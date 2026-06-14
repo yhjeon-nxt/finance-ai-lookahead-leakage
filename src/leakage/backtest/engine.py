@@ -91,6 +91,7 @@ def run_backtest(group: Group, client: LLMClient, seed: int,
     equity = 1.0
     n_parse_fail = 0
     prev_ret, prev_expo = None, None
+    last_weights: dict[str, float] = {}  # carried forward on a parse failure
 
     with cache_path.open("a") as fh:
         for i, day in enumerate(decision_days):
@@ -105,29 +106,44 @@ def run_backtest(group: Group, client: LLMClient, seed: int,
                 dec = agent.decide(key, text, seed=seed + i, reflection=reflection)
                 fh.write(json.dumps(asdict(dec)) + "\n")
                 fh.flush()
-            if not dec.parse_ok:
-                n_parse_fail += 1
-
             decisions.append(dec)
-            w = dec.target_weights
-            weights_rows[day] = {t: w.get(t, 0.0) for t in UNIVERSE}
-            exposure[day] = dec.exposure
-            confidence[day] = dec.confidence
 
-            # Realize on next day.
+            # On a parse failure carry forward the prior book (realistic) for the EQUITY curve,
+            # but DO NOT record the day in the foresight-metric inputs — coercing it to all-cash
+            # would differentially attenuate leakage metrics if failures cluster on event days.
+            if dec.parse_ok:
+                w = dec.target_weights
+                last_weights = w
+                weights_rows[day] = {t: w.get(t, 0.0) for t in UNIVERSE}
+                exposure[day] = dec.exposure
+                confidence[day] = dec.confidence
+                nxt = days[i + 1]
+                nd_returns[day] = rets.loc[nxt].to_dict()
+            else:
+                n_parse_fail += 1
+                w = last_weights  # hold yesterday's positions
+
+            # Realize on next day (equity curve covers every day for a continuous series).
             nxt = days[i + 1]
             r_next = rets.loc[nxt]
-            nd_returns[day] = r_next.to_dict()
             port_r = float(sum(w.get(t, 0.0) * float(r_next[t]) for t in UNIVERSE))
             equity *= (1.0 + port_r)
             equity_vals.append(equity)
             port_rets.append(port_r)
-            prev_ret, prev_expo = port_r, dec.exposure
+            prev_ret, prev_expo = port_r, float(sum(w.values()))
             if verbose:
-                print(f"  {key} expo={dec.exposure:.2f} conf={dec.confidence:.2f} "
+                print(f"  {key} ok={dec.parse_ok} expo={sum(w.values()):.2f} "
                       f"r_next={port_r:+.4f} eq={equity:.4f}")
 
     realized_dates = days[1: len(decision_days) + 1]
+
+    def _panel(d: dict) -> pd.DataFrame:
+        return (pd.DataFrame(d).T[UNIVERSE] if d
+                else pd.DataFrame(columns=UNIVERSE, dtype=float))
+
+    if n_parse_fail:
+        print(f"  [warn] {group.name} seed{seed}: {n_parse_fail}/{len(decision_days)} "
+              f"parse failures (excluded from foresight metrics)")
     return BacktestResult(
         group=group.name,
         model=group.model.tag,
@@ -135,10 +151,10 @@ def run_backtest(group: Group, client: LLMClient, seed: int,
         dates=list(decision_days),
         equity=pd.Series(equity_vals, index=realized_dates, name="equity"),
         port_returns=pd.Series(port_rets, index=realized_dates, name="ret"),
-        weights=pd.DataFrame(weights_rows).T[UNIVERSE],
+        weights=_panel(weights_rows),
         exposure=pd.Series(exposure, name="exposure"),
         confidence=pd.Series(confidence, name="confidence"),
-        next_day_returns=pd.DataFrame(nd_returns).T[UNIVERSE],
+        next_day_returns=_panel(nd_returns),
         decisions=decisions,
         n_parse_fail=n_parse_fail,
     )
