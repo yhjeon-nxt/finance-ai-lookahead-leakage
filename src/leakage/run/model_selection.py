@@ -87,6 +87,18 @@ def probe(models: list[str]) -> dict:
     return out
 
 
+def pick_best(models: list[str]) -> str:
+    """Probe candidates and return the tag with the highest 2024-H2 recall (ties: first given)."""
+    res = probe(models)
+    best = max(models, key=lambda m: res[m]["score_2024H2"])
+    (RESULTS_DIR / "treatment_model.txt").write_text(best)
+    return best
+
+
 if __name__ == "__main__":
-    models = sys.argv[1:] or ["llama3.1:8b", "qwen3:8b", "phi4", "qwen2.5:7b"]
-    probe(models)
+    if len(sys.argv) > 1 and sys.argv[1] == "--pick":
+        # Probe the candidates, write/emit only the winning tag (stdout last line) for scripts.
+        winner = pick_best(sys.argv[2:] or ["qwen3:32b", "qwen2.5:32b"])
+        print(winner)
+    else:
+        probe(sys.argv[1:] or ["llama3.1:8b", "qwen3:8b", "phi4", "qwen2.5:7b"])

@@ -30,9 +30,10 @@ curl -fsSL https://ollama.com/install.sh | sh
 nohup ollama serve >/var/log/ollama.log 2>&1 &
 for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sleep 2; done
 
-# --- models (the two real groups) ------------------------------------------
+# --- models: control + candidate treatments (selection happens after code) --
 ollama pull llama3.1:8b
-ollama pull qwen3:8b
+ollama pull qwen3:32b
+ollama pull qwen2.5:32b
 
 # --- code + prepared data from S3 ------------------------------------------
 mkdir -p "$WORKDIR" && cd "$WORKDIR"
@@ -44,6 +45,13 @@ pip3 install -r requirements.txt
 sync_results() { aws s3 sync "$WORKDIR/results/" "s3://$S3_BUCKET/$S3_PREFIX/$RUN_TAG/results/" || true; }
 ( while true; do sync_results; sleep 60; done ) &
 RESYNC_PID=$!
+
+# Empirically select the treatment model: highest verified 2024-H2 factual recall.
+export LEAKAGE_CONTROL_MODEL=llama3.1:8b
+TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen2.5:32b 2>>"$LOG" | tail -1)
+echo "selected treatment model: $TREAT"
+export LEAKAGE_TREATMENT_MODEL="$TREAT"
+export LEAKAGE_TREATMENT_CUTOFF="2024+ (auto-selected)"
 
 set +e
 PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.main --tag "$RUN_TAG" --no-s3

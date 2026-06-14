@@ -100,8 +100,13 @@ class ModelSpec:
     label: str
 
 
-TREATMENT_MODEL = ModelSpec("qwen3:8b", "2024+ (2025 release)", "treatment")
-CONTROL_MODEL = ModelSpec("llama3.1:8b", "2023-12", "control")
+# Treatment/control model tags are overridable via env so the EC2 run can select a larger
+# treatment (e.g. qwen3:32b) without code changes; defaults match the locally-validated pair.
+TREATMENT_MODEL = ModelSpec(
+    os.environ.get("LEAKAGE_TREATMENT_MODEL", "qwen3:8b"),
+    os.environ.get("LEAKAGE_TREATMENT_CUTOFF", "2024+ (2025 release)"), "treatment")
+CONTROL_MODEL = ModelSpec(
+    os.environ.get("LEAKAGE_CONTROL_MODEL", "llama3.1:8b"), "2023-12", "control")
 # Tiny model purely for local pipeline smoke tests (NOT used for results).
 SMOKE_MODEL = ModelSpec("llama3.2:1b", "2023-12", "smoke")
 
@@ -125,6 +130,6 @@ GROUPS = [
 
 # Experiment knobs
 TRAILING_DAYS = 60        # length of price history shown to the agent at each decision
-SEEDS = [0, 1, 2]         # repeats for error bars on headline comparisons
+SEEDS = [int(s) for s in os.environ.get("LEAKAGE_SEEDS", "0,1,2").split(",") if s.strip()]
 AGENT_TEMPERATURE = 0.7   # > 0 so seeds differ
 STARTING_CASH = 1_000_000.0
