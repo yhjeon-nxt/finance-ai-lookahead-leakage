@@ -17,7 +17,19 @@ narrative reasoning survives context compaction. Newest at top.
 - **2024-11-05/06** — US presidential election → "Trump trade": small caps (IWM), banks (JPM),
   TSLA, crypto-adjacent (COIN/DJT) rallied. Ideal "did it load up *before* the result?" probe.
 
+## Phase 1 audit — the report hook
+
+Across all 10 class papers, **only CausalStock and TradeMaster discuss look-ahead bias, and
+both only as a *data-pipeline* issue fixed by a chronological train/test split.** NONE address
+**parametric leakage** — the LLM's pre-training corpus already containing the test period. A
+chronological split of the *inputs* does not fix this; the future is in the weights. This is
+exactly the gap this project isolates. Class consensus architecture = ReAct + Reflection +
+structured output (tool use 8/8, reflection 6/8, ReAct 5/8) → confirms my minimal-agent design.
+
 ## Decisions / pivots
 
 - 2026-06-14: API → local open models (ollama) for a *real* cutoff gap, zero API cost.
 - 2026-06-14: kept 2024-H2 window, re-derived from cutoffs rather than assumed.
+- 2026-06-14: **context = price-only (no news)**. We test *parametric memory* leakage; if the
+  agent only sees prices ≤ day T, any foresight must come from training memory, not the feed.
+  News would open a second leakage channel and muddy the causal claim. Methodological upgrade.
