@@ -39,14 +39,15 @@ OOD_DENY = ("q1_2026",
 
 def _ask(model: str, q: str) -> str:
     import ollama
+    client = ollama.Client(timeout=600)  # tolerate cold-load of large (32B) models
     think = any(k in model.lower() for k in ("qwen3", "deepseek-r1", "r1"))
     kw = dict(model=model, messages=[{"role": "user", "content": q}],
               options={"temperature": 0.0, "num_predict": 250})
     try:
         try:
-            r = ollama.chat(**({**kw, "think": False} if think else kw))
-        except Exception:  # noqa: BLE001
-            r = ollama.chat(**kw)
+            r = client.chat(**({**kw, "think": False} if think else kw))
+        except Exception:  # noqa: BLE001 - model may not accept think kwarg
+            r = client.chat(**kw)
         return r["message"]["content"].strip()
     except Exception as e:  # noqa: BLE001
         return f"[error: {e}]"

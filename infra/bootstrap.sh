@@ -50,10 +50,10 @@ nohup ollama serve >/var/log/ollama.log 2>&1 &
 for i in $(seq 1 30); do curl -s http://localhost:11434/api/version && break; sleep 2; done
 
 # --- models: control + candidate treatments (selection happens after code) --
-# qwen3:8b is included as a known-eligible fallback (locally verified: 2/4, denies 2026, sane).
+# qwen3:32b = bigger candidate (fair shot w/ 600s cold-load timeout); qwen3:8b = known-eligible
+# fallback (verified: 2/4, denies 2026, sane). qwen2.5:32b dropped — verified older-cutoff (2022/23).
 ollama pull llama3.1:8b
 ollama pull qwen3:32b
-ollama pull qwen2.5:32b
 ollama pull qwen3:8b
 
 # --- code + prepared data from S3 ------------------------------------------
@@ -75,7 +75,7 @@ RESYNC_PID=$!
 # also deny 2026 knowledge + pass sanity (pick_best fails loudly if none qualify). qwen3:8b is a
 # guaranteed-eligible fallback so the bigger models are preferred only when they actually qualify.
 export LEAKAGE_CONTROL_MODEL=llama3.1:8b
-TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen2.5:32b qwen3:8b 2>>"$LOG" | tail -1)
+TREAT=$(PYTHONPATH="$WORKDIR/src" python3 -m leakage.run.model_selection --pick qwen3:32b qwen3:8b 2>>"$LOG" | tail -1)
 echo "selected treatment model: '$TREAT'"
 [ -n "$TREAT" ] || { echo "treatment selection produced no model — aborting"; exit 3; }
 export LEAKAGE_TREATMENT_MODEL="$TREAT"

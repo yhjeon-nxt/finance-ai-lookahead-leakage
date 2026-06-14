@@ -2,6 +2,7 @@
 pandas>=2.2
 numpy>=1.26
 scipy>=1.11
+pyarrow>=15.0   # parquet engine for pandas (absent in a bare pip env -> read_parquet fails)
 
 # Market data
 yfinance>=0.2

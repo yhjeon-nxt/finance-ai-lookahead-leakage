@@ -48,7 +48,9 @@ class OllamaClient(LLMClient):
     def complete(self, system: str, user: str, *, temperature: float, seed: int) -> LLMResponse:
         import ollama  # imported lazily so the package isn't required for mock runs
 
-        client = ollama.Client(host=self._host) if self._host else ollama
+        # Generous timeout: a cold-loading 20-30GB model can take 1-2 min before first token,
+        # which otherwise trips the client default and looks like a model failure.
+        client = ollama.Client(host=self._host, timeout=600)
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
