@@ -16,6 +16,7 @@ Durable across context compaction — read this + `findings.md` to resume.
 | 6 | Research report | ✅ results+discussion+related-work+figures+Gemma §4.9 written |
 | 7 | Gemma 3 12B independent-family test (RUN_TAG=gemma) | ✅ done — did NOT replicate (confabulates; H2) |
 | 8 | Per-model in-vs-out (4 models, 3 seeds, EC2) | ✅ done — DiD orders by recall |
+| 9 | 32B+8B parallel fleet (7 spot, size×recall) | ✅ done — within-family bigger→larger DiD (all ns); 32B-H2 headline null (cutoff/window) |
 
 ## Open gates (require user)
 
