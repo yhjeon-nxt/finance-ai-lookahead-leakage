@@ -38,10 +38,10 @@ Y2026 = Window("Y2026", date(2026, 1, 1), date(2026, 6, 13), date(2025, 10, 1))
 # chosen PER MODEL so it is genuinely post-cutoff: for qwen3 (a 2025-release model that partly
 # knows 2025) the only clean OOD window is 2026; for the others 2025 is clean.
 MODELS = [
-    {"tag": "llama3.1:8b", "cutoff": "2023-12", "recall": "denies 2024", "in": Y2023, "out": Y2025},
-    {"tag": "qwen2.5:7b",  "cutoff": "~2023-10", "recall": "knows 2023, denies 2024", "in": Y2023, "out": Y2025},
-    {"tag": "qwen3:8b",    "cutoff": "~2024-Q4", "recall": "RECALLS 2024-H2", "in": Y2024, "out": Y2026},
-    {"tag": "gemma3:12b",  "cutoff": "2024-08",  "recall": "confabulates 2024", "in": Y2024, "out": Y2025},
+    {"tag": "qwen3:32b",        "cutoff": "~2024-Q4", "recall": "2024-aware",            "in": Y2024, "out": Y2026},
+    {"tag": "qwen2.5:32b",      "cutoff": "~2023",    "recall": "~2023 (denies 2024)",   "in": Y2023, "out": Y2025},
+    {"tag": "gemma3:27b",       "cutoff": "2024-08",  "recall": "Aug-2024 (often confab)", "in": Y2024, "out": Y2025},
+    {"tag": "mistral-small3.2", "cutoff": "~2023-10", "recall": "~2023 (denies 2024)",   "in": Y2023, "out": Y2025},
 ]
 
 
