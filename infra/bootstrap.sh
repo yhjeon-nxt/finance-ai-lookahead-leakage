@@ -77,6 +77,11 @@ aws s3 sync "s3://$S3_BUCKET/$S3_PREFIX/data/" "$WORKDIR/data/" || true   # cach
 # back to live yfinance on EC2 (different/blocked data). Fail loudly (trap self-terminates).
 test -f "$WORKDIR/data/raw/prices_2024H2.parquet" || { echo "MISSING prices_2024H2.parquet"; exit 2; }
 test -f "$WORKDIR/data/raw/prices_2026JanMay.parquet" || { echo "MISSING prices_2026JanMay.parquet"; exit 2; }
+# SPOT RESUME: restore any prior progress (per-day decision cache) from S3, so a re-launched
+# instance after a spot interruption continues instead of recomputing from scratch. The decision
+# cache is keyed by (group,client,seed,date) and only completed days are cached, so this is safe.
+aws s3 sync "s3://$S3_BUCKET/$S3_PREFIX/$RUN_TAG/results/" "$WORKDIR/results/" || true
+echo "restored $(find "$WORKDIR/results/decisions" -name '*.jsonl' 2>/dev/null | wc -l) cached decision files"
 pip3 install -r requirements.txt
 
 # --- run (resumable) + stream results --------------------------------------
