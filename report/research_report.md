@@ -49,6 +49,15 @@ both tiers — the **larger model shows the *larger* regime-adjusted leakage gap
 effectively. All per-model effects remain individually non-significant (underpowered), so the
 evidence is the *direction* and the *within-family monotonicity*, not per-model p-values.
 
+![Graphical abstract — the leakage signature](figures/graphical_abstract.png)
+
+*The leakage signature in one view. A model that **genuinely recalls** the backtest window
+(**1**) earns a far higher Sharpe than a different-cutoff control or itself on an unseen window
+(1.76 vs 0.30 / 0.49); (**2**) **cuts risk into the Aug-5 crash it demonstrably remembers** — in
+the top ~5% of random-timing outcomes (p=0.051) — while the control did the opposite; and (**3**)
+shows exposure-timing foresight that **exceeds what market regime alone explains** (regime-adjusted
+DiD > 0 on every metric). All three appear **only in-distribution**.*
+
 ---
 
 ## 1. Introduction
@@ -198,6 +207,16 @@ documented and effective cutoff (cf. *Dated Data*, §2b) is exactly why the leak
 **Finding already visible here:** parametric knowledge of the test window is *real but uneven* —
 market facts surface, politically-sensitive facts are suppressed by alignment, and models'
 self-reported cutoffs are simply wrong. Leakage is not all-or-nothing.
+
+![Knowledge-probe scorecard](figures/probe_scorecard.png)
+
+*Empirical knowledge-probe scorecard — the basis for treatment selection and the keystone of the
+whole design. **`qwen3:8b`** (treatment) genuinely recalls the market-relevant facts (NVIDIA split,
+Aug-5 crash) while RLHF suppresses the political ones; **`gemma3:12b`** has a documented in-window
+cutoff yet **confabulates** ("Biden won the 2024 election"); the control bank (`llama3.1:8b`,
+`phi4`, `qwen2.5:7b`) **denies** the window outright. This dissociation — **genuine recall ≠
+documented cutoff** — is exactly why leakage must be tested against *measured* recall, not
+model-card dates, and it predicts which models do (§4.1–4.8) and do not (§4.9) leak.*
 
 ### 3.5 Agent architecture
 
@@ -351,11 +370,6 @@ The cross-model contrast is marginal (p≈0.075); the within-model contrast is d
 consistent but not significant at this sample size (~100–128 days × 3 seeds) — an
 **underpowering** limitation, not evidence of absence.
 
-![Timing prescience with CIs](figures/timing_prescience_ci.png)
-
-*Exposure-timing prescience per group (mean ± 95% bootstrap CI). Positive only for the treatment
-in-distribution; both controls are negative. The wide intervals make the underpowering explicit.*
-
 ### 4.5 Within-model foresight gap + regime-adjusted difference-in-differences
 | Metric | LLM gap (T-in−C-B) | No-memory baseline gap (MockClient momentum, same windows/seeds) | **DiD (leakage)** |
 |---|---|---|---|
@@ -366,6 +380,17 @@ in-distribution; both controls are negative. The wide intervals make the underpo
 Critically, the **no-memory momentum baseline's** in-dist−OOD gap is *negative*, so the regime
 difference between 2024-H2 and 2026 works *against* the finding; the **DiD is positive on every
 metric**, i.e. the treatment's in-distribution foresight exceeds what regime alone explains.
+
+![Statistical evidence: prescience by group + regime-adjusted DiD](figures/stat_evidence.png)
+
+*Left — raw exposure-timing prescience per group (mean ± 95% bootstrap CI): positive only for the
+treatment in-distribution; both controls are ≤0 (T-in vs C-A permutation p=0.075). The wide
+intervals make the underpowering explicit. **Right — the difference-in-differences.** The LLM
+agent's in-distribution prescience (+0.054) sits far above the **regime-only counterfactual**
+(dotted; where it would land if it merely tracked the market regime like the no-memory momentum
+baseline). The gap between them is the leakage **DiD = +0.136** — positive on all three metrics
+(ticker +0.026, conf-wtd +0.145). This is the figure that makes the claim causal rather than
+correlational: the foresight is what's left after netting out the 2024-H2-vs-2026 regime shift.*
 
 ### 4.6 Rationale forensics
 The automated scan found **0** future-event "confessions" in the trading rationales (all groups).
@@ -387,10 +412,14 @@ The treatment's de-risking into the crash is in the **top ~5%** of random-timing
 control did the **opposite** — it carried *more* risk than usual into the crash (p=0.92, i.e. far
 from any de-risk). This directly answers the "pre-event timing has no null distribution" critique.
 
-![Exposure timeline](figures/exposure_timeline_2024H2.png)
+![Aug-5 forensics: exposure timeline + pseudo-event null](figures/aug5_forensics.png)
 
-*Seed-averaged portfolio exposure through 2024-H2 (band = inter-seed min/max). The treatment
-(green) cuts risk around the Aug-5 crash; the control (blue) is comparatively noisy.*
+*Aug-5 crash forensics. **Left:** seed-averaged portfolio exposure through 2024-H2 (band =
+inter-seed min/max) — the treatment (green) cuts its risk dial into the Aug-5 crash. **Right:** the
+significance of that move. The treatment's observed de-risk (+0.115) lands in the **top ~5%** of
+the null distribution of de-risk scores at 98 random pseudo-event dates (p=0.051), whereas the
+control's observed value (−0.125) sits on the **opposite** tail (p=0.92) — it carried more risk
+than usual into the crash. The behaviour is both present and calibrated-significant.*
 
 ### 4.8 Per-ticker and allocation views
 Beyond portfolio-level metrics, the *composition* of the treatment's book is revealing. Around
@@ -412,10 +441,10 @@ on banks (JPM), not a blanket basket bet.
 
 This is striking because the cutoff probe shows qwen3:8b **verbally refuses** the election
 question (RLHF guardrail) — yet its *allocation* still tilts significantly toward a key winner.
-Leakage can be **behavioural even where verbal recall is suppressed**. Per-ticker next-day
-prescience (`figures/ticker_prescience.png`) is noisier (n≈127/ticker) but the treatment's
-positive values concentrate on the AI/election-sensitive names (COIN +0.12, IWM +0.10,
-NVDA/JPM ≈ +0.03), whereas the control is mostly ≤0.
+Leakage can be **behavioural even where verbal recall is suppressed**. (A noisier per-ticker
+next-day prescience view, n≈127/ticker, is in the repo — `leakage.run.figures_extra` — and tells
+the same story: the treatment's positive values concentrate on the election-sensitive names while
+the control is mostly ≤0.)
 
 ### 4.9 Independent-family test (Gemma 3 12B): a non-replication that sharpens the thesis
 

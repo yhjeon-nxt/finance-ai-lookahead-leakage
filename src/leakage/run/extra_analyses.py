@@ -79,27 +79,41 @@ def pseudo_event_null(group: str, event=AUG5, n: int = 5000, k: int = 20, seed: 
 
 
 def exposure_timeline_fig():
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
 
-    fig, ax = plt.subplots(figsize=(11, 5))
-    colors = {"T-in": "tab:green", "C-A": "tab:blue"}
+    from leakage.run import figstyle as fs
+    plt = fs.plt
+    fs.use()
+
+    fig, ax = plt.subplots(figsize=(12, 5.2))
+    colors = {"T-in": fs.TREAT, "C-A": fs.CTRL}
+    label = {"T-in": "T-in exposure (seed-avg)", "C-A": "C-A exposure (seed-avg)"}
+    xmin, xmax = None, None
     for g, c in colors.items():
         panel = _exposure_panel(g)
         if panel.empty:
             continue
         mean = panel.mean(axis=1)
-        ax.plot(mean.index, mean.values, color=c, label=f"{g} exposure (seed-avg)")
-        ax.fill_between(panel.index, panel.min(axis=1), panel.max(axis=1), color=c, alpha=0.15)
+        ax.plot(mean.index, mean.values, color=c, lw=1.9, zorder=4, label=label[g])
+        ax.fill_between(panel.index, panel.min(axis=1), panel.max(axis=1), color=c,
+                        alpha=0.16, lw=0, zorder=2, label=f"{g} seed min–max")
+        xmin = mean.index.min() if xmin is None else min(xmin, mean.index.min())
+        xmax = mean.index.max() if xmax is None else max(xmax, mean.index.max())
+    fs.ygrid(ax); fs.despine(ax)
+    ax.set_ylim(0, 1.08)
+    if xmin is not None:
+        ax.set_xlim(xmin, xmax)
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
+    fs.title(ax, "Portfolio exposure (risk dial) through 2024-H2",
+             "treatment vs control · shaded band = inter-seed min–max (rules out a lucky seed)")
+    ax.set_ylabel("total invested fraction")
     for d, lab in [(AUG5, "Aug-5 crash"), (NOV5, "Nov-5 election")]:
-        ax.axvline(d, color="red", ls="--", lw=1)
-        ax.text(d, 1.01, lab, rotation=90, va="bottom", fontsize=8, color="red")
-    ax.set_title("Portfolio exposure (risk dial) through 2024-H2 — treatment vs control")
-    ax.set_ylabel("total invested fraction"); ax.set_ylim(0, 1.05)
-    ax.legend(loc="lower right"); fig.tight_layout()
+        fs.event_marker(ax, d, lab, y_frac=0.12, va="bottom", ha="left")
+    fs.legend(ax, loc="lower right", ncol=2)
+    fig.tight_layout()
     out = FIG_DIR / f"exposure_timeline_2024H2{_SFX}.png"
-    fig.savefig(out, dpi=130); plt.close(fig)
+    fs.save(fig, out)
     return out
 
 

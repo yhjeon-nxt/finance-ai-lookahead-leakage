@@ -62,21 +62,38 @@ def main():
     print("\n".join(lines))
     print(f"\n[compare] wrote {out_md}")
 
-    # grouped bar of the leakage-relevant metrics
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    # grouped bar of the leakage-relevant metrics. Sharpe (~1.8) and the timing metrics (~0.1)
+    # live on wildly different scales, so they get SEPARATE panels — on one shared axis the timing
+    # bars were invisible.
     import numpy as np
-    show = ["T-in Sharpe", "T-in exposure timing", "DiD exposure timing"]
-    labels = list(rows.keys())
-    x = np.arange(len(show)); bw = 0.38
-    fig, ax = plt.subplots(figsize=(9, 5))
-    for i, k in enumerate(labels):
-        ax.bar(x + (i - 0.5) * bw, [rows[k][m] for m in show], bw, label=k)
-    ax.axhline(0, color="k", lw=0.6); ax.set_xticks(x); ax.set_xticklabels(show)
-    ax.set_title("Cross-family leakage signature: qwen3:8b vs gemma3:12b (treatment, in-distribution)")
-    ax.legend(); fig.tight_layout()
-    fig.savefig(RESULTS_DIR / "figures" / "cross_family_comparison.png", dpi=130); plt.close(fig)
+
+    from leakage.run import figstyle as fs
+    plt = fs.plt
+    fs.use()
+    labels = list(rows.keys())                       # ["qwen3:8b (ec2)", "gemma3:12b (gemma)"]
+    fam_color = [fs.TREAT, fs.CONFAB]                # qwen3 genuinely recalls; gemma confabulates
+    panels = [("Sharpe ratio (in-distribution)", ["T-in Sharpe"], ["T-in\nSharpe"]),
+              ("Leakage timing metrics (corr units)",
+               ["T-in exposure timing", "DiD exposure timing"],
+               ["T-in exposure\ntiming", "DiD exposure\ntiming"])]
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 5.2), gridspec_kw={"width_ratios": [1, 1.7]})
+    for ax, (ptitle, metrics, mlabels) in zip(axes, panels):
+        x = np.arange(len(metrics)); bw = 0.36
+        for i, k in enumerate(labels):
+            vals = [rows[k][m] for m in metrics]
+            b = ax.bar(x + (i - 0.5) * bw, vals, bw, label=k, color=fam_color[i % 2],
+                       edgecolor="white", lw=0.7, zorder=3)
+            fs.bar_labels(ax, b, vals, fmt="{:.3f}", fontsize=9, dy_frac=0.025)
+        fs.ygrid(ax); fs.zero_line(ax); fs.despine(ax)
+        ax.set_xticks(x); ax.set_xticklabels(mlabels)
+        ax.set_title(ptitle, loc="left", fontsize=12)
+        ax.margins(y=0.18)
+    axes[0].legend(loc="upper right")
+    fig.suptitle("Cross-family leakage signature — qwen3:8b (recalls) vs gemma3:12b (confabulates)",
+                 y=1.00, fontsize=14, fontweight="bold")
+    fig.tight_layout()
+    fs.save(fig, RESULTS_DIR / "figures" / "cross_family_comparison.png")
     print("[compare] wrote results/figures/cross_family_comparison.png")
 
 

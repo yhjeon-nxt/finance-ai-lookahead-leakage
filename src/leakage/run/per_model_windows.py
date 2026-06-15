@@ -123,36 +123,71 @@ def main():
 
 
 def _plot(out: dict):
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    tags = list(out["models"].keys())
-    did = [out["models"][t]["DiD"] for t in tags]
+    from matplotlib.patches import Patch
+
+    from leakage.run import figstyle as fs
+    plt = fs.plt
+    fs.use()
+
+    # Display order: group by family, small→large, so the within-family size effect (§4.10)
+    # is read off adjacent bars; then the lone-model controls. Tier shown under each tick.
+    pref = ["qwen3:8b", "qwen3:32b", "qwen2.5:7b", "qwen2.5:32b",
+            "gemma3:12b", "gemma3:27b", "llama3.1:8b", "mistral-small3.2"]
+    tags = [t for t in pref if t in out["models"]] + [t for t in out["models"] if t not in pref]
+    M = out["models"]
+    did = [M[t]["DiD"] for t in tags]
     # Prefer the block-bootstrap DiD p (autocorrelation-robust, tests the DiD itself);
     # fall back to the raw-gap permutation p if the block stats haven't been computed yet.
-    pval = [out["models"][t].get("did_block", {}).get("p_gt_0",
-            out["models"][t].get("perm_in_vs_out_p", float("nan"))) for t in tags]
-    sin = [out["models"][t]["sharpe_in"] for t in tags]
-    sout = [out["models"][t]["sharpe_out"] for t in tags]
-    recall = [out["models"][t]["recall"] for t in tags]
-    colr = ["tab:green" if "RECALL" in r else ("tab:orange" if "confab" in r else "tab:gray") for r in recall]
+    pval = [M[t].get("did_block", {}).get("p_gt_0", M[t].get("perm_in_vs_out_p", float("nan")))
+            for t in tags]
+    sin = [M[t]["sharpe_in"] for t in tags]
+    sout = [M[t]["sharpe_out"] for t in tags]
+
+    def _kind(r):  # robust to label casing (the old "RECALL" check silently matched nothing)
+        rl = r.lower()
+        return "recall" if "recall" in rl else ("confab" if "confab" in rl else "deny")
+    kind = [_kind(M[t]["recall"]) for t in tags]
+    cmap = {"recall": fs.TREAT, "confab": fs.CONFAB, "deny": fs.NEUTRAL}
+    colr = [cmap[k] for k in kind]
+    tier_of = {m["tag"]: m["tier"] for m in MODELS}
+    ticklabels = [f"{t}\n({tier_of[t]})" if t in tier_of else t for t in tags]
+
     x = np.arange(len(tags))
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 5))
-    a1.bar(x, did, color=colr); a1.axhline(0, color="k", lw=0.6)
-    ymax = max(did + [0.01])
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(14, 5.6))
+
+    # --- panel 1: leakage DiD + one-sided bootstrap p ---
+    bars = a1.bar(x, did, color=colr, width=0.66, edgecolor="white", lw=0.7, zorder=3)
+    fs.ygrid(a1); fs.zero_line(a1); fs.despine(a1)
+    lo, hi = min(did + [0]), max(did + [0.01])
+    a1.set_ylim(lo - (hi - lo) * 0.18, hi * 1.30)
     for j, (d, p) in enumerate(zip(did, pval)):
-        star = "*" if p < 0.1 else "ns"
-        a1.text(j, d + ymax * 0.04, f"p={p:.2f}\n{star}", ha="center", va="bottom", fontsize=8,
-                color=("crimson" if p < 0.1 else "gray"))
-    a1.set_ylim(min(did + [0]) - ymax * 0.05, ymax * 1.30)
-    a1.set_xticks(x); a1.set_xticklabels(tags, rotation=20); a1.set_ylabel("DiD (in − out, regime-adjusted)")
-    a1.set_title("Per-model leakage DiD + one-sided bootstrap p (H0: no leakage; small=leakage) — green=recalls, orange=confab, gray=denies")
-    a2.bar(x - 0.2, sin, 0.4, label="in-train year", color="tab:green")
-    a2.bar(x + 0.2, sout, 0.4, label="out-of-train year", color="tab:red")
-    a2.axhline(0, color="k", lw=0.6); a2.set_xticks(x); a2.set_xticklabels(tags, rotation=20)
-    a2.set_ylabel("Sharpe"); a2.set_title("In-train vs out-of-train Sharpe, per model"); a2.legend()
-    fig.tight_layout(); fig.savefig(RESULTS_DIR / "figures" / "per_model_in_vs_out.png", dpi=130)
-    plt.close(fig)
+        yy = d + (hi - lo) * (0.03 if d >= 0 else -0.03)
+        a1.text(j, yy, f"p={p:.2f}\n{fs.sig_star(p)}", ha="center",
+                va="bottom" if d >= 0 else "top", fontsize=8.5, color=fs.sig_color(p))
+    a1.set_xticks(x); a1.set_xticklabels(ticklabels, fontsize=9)
+    a1.set_ylabel("leakage DiD  (in − out, regime-adjusted)")
+    fs.title(a1, "Per-model leakage signal",
+             "DiD with one-sided bootstrap p  (H₀: no leakage — smaller p = stronger leakage)")
+    a1.legend(handles=[Patch(fc=fs.TREAT, label="genuinely recalls window"),
+                       Patch(fc=fs.CONFAB, label="confabulates window"),
+                       Patch(fc=fs.NEUTRAL, label="denies / pre-cutoff")],
+              loc="upper left", fontsize=9)
+
+    # --- panel 2: in-train vs out-of-train Sharpe ---
+    bw = 0.4
+    b_in = a2.bar(x - bw / 2, sin, bw, label="in-train year", color=fs.TREAT,
+                  edgecolor="white", lw=0.7, zorder=3)
+    b_out = a2.bar(x + bw / 2, sout, bw, label="out-of-train year", color=fs.OOD,
+                   edgecolor="white", lw=0.7, zorder=3)
+    fs.ygrid(a2); fs.zero_line(a2); fs.despine(a2)
+    a2.set_xticks(x); a2.set_xticklabels(ticklabels, fontsize=9)
+    a2.set_ylabel("Sharpe ratio")
+    fs.title(a2, "In-train vs out-of-train Sharpe",
+             "every model is sharper inside its training window")
+    a2.legend(loc="upper right")
+
+    fig.tight_layout()
+    fs.save(fig, RESULTS_DIR / "figures" / "per_model_in_vs_out.png")
     print("[per-model] wrote results/figures/per_model_in_vs_out.png")
 
 

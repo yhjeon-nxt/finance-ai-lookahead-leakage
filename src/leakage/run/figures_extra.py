@@ -94,24 +94,29 @@ def _ticker_prescience(group, tag, window) -> pd.Series:
 
 
 def _plot():
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    from leakage.run import figstyle as fs
+    plt = fs.plt
+    fs.use()
 
     groups = [("T-in", _TREAT, IN_DIST), ("C-A", _CTRL, IN_DIST),
               ("C-B", _TREAT, OOD)]
-    colors = {"T-in": "tab:green", "C-A": "tab:blue", "C-B": "tab:orange"}
+    colors = fs.GROUP_COLORS
+    glabel = {"T-in": f"T-in  ({_TREAT})", "C-A": f"C-A  ({_CTRL})", "C-B": f"C-B  ({_TREAT}, OOD)"}
 
     # --- Figure 1: per-ticker prescience ---
     presc = {g: _ticker_prescience(g, tag, w) for g, tag, w in groups}
-    fig, ax = plt.subplots(figsize=(11, 5))
+    fig, ax = plt.subplots(figsize=(11.5, 5.2))
     x = np.arange(len(UNIVERSE)); bw = 0.26
     for i, g in enumerate(["T-in", "C-A", "C-B"]):
-        ax.bar(x + (i - 1) * bw, [presc[g][t] for t in UNIVERSE], bw, label=g, color=colors[g])
-    ax.axhline(0, color="k", lw=0.6); ax.set_xticks(x); ax.set_xticklabels(UNIVERSE)
-    ax.set_ylabel("corr(today's weight, next-day return)")
-    ax.set_title("Per-ticker next-day prescience — only the treatment (T-in) is consistently positive")
-    ax.legend(); fig.tight_layout(); fig.savefig(FIG / f"ticker_prescience{_SFX}.png", dpi=130); plt.close(fig)
+        ax.bar(x + (i - 1) * bw, [presc[g][t] for t in UNIVERSE], bw, label=glabel[g],
+               color=colors[g], edgecolor="white", lw=0.6, zorder=3)
+    fs.ygrid(ax); fs.zero_line(ax); fs.despine(ax)
+    ax.set_xticks(x); ax.set_xticklabels(UNIVERSE)
+    ax.set_ylabel("corr( today's weight,  next-day return )")
+    fs.title(ax, "Per-ticker next-day prescience",
+             "only the treatment (T-in) is consistently positive across tickers")
+    fs.legend(ax, loc="upper left", ncol=3)
+    fig.tight_layout(); fs.save(fig, FIG / f"ticker_prescience{_SFX}.png")
 
     # --- Figure 2: election-window mean allocation (T-in vs C-A) + per-ticker permutation p ---
     lo, hi = NOV5 - pd.Timedelta(days=7), NOV5 + pd.Timedelta(days=7)  # ~±7d for a few more obs
@@ -122,25 +127,28 @@ def _plot():
         r = stats.permutation_diff(raw_t[t], raw_c[t], n_perm=20000)
         pvals[t], diffs[t] = r["p_value"], r["diff"]
 
-    fig, ax = plt.subplots(figsize=(12, 5.5))
-    ax.bar(x - 0.2, [raw_t[t].mean() for t in UNIVERSE], 0.4, label=f"T-in ({_TREAT})", color=colors["T-in"])
-    ax.bar(x + 0.2, [raw_c[t].mean() for t in UNIVERSE], 0.4, label=f"C-A ({_CTRL})", color=colors["C-A"])
+    fig, ax = plt.subplots(figsize=(12, 5.6))
+    ax.bar(x - 0.2, [raw_t[t].mean() for t in UNIVERSE], 0.4, label=glabel["T-in"],
+           color=colors["T-in"], edgecolor="white", lw=0.6, zorder=3)
+    ax.bar(x + 0.2, [raw_c[t].mean() for t in UNIVERSE], 0.4, label=glabel["C-A"],
+           color=colors["C-A"], edgecolor="white", lw=0.6, zorder=3)
+    fs.ygrid(ax); fs.despine(ax)
     ymax = max([raw_t[t].mean() for t in UNIVERSE] + [raw_c[t].mean() for t in UNIVERSE])
+    ax.set_ylim(0, ymax * 1.42)
     for j, t in enumerate(UNIVERSE):
         top = max(raw_t[t].mean(), raw_c[t].mean())
         p = pvals[t]
-        star = "***" if p < 0.01 else "**" if p < 0.05 else "*" if p < 0.1 else "ns"
-        ax.text(j, top + ymax * 0.03, f"Δ={diffs[t]:+.3f}\np={p:.3f} {star}",
-                ha="center", va="bottom", fontsize=8,
-                color=("crimson" if p < 0.1 else "gray"))
+        ax.text(j, top + ymax * 0.04, f"Δ={diffs[t]:+.3f}\np={p:.3f} {fs.sig_star(p)}",
+                ha="center", va="bottom", fontsize=8.5, color=fs.sig_color(p))
     ax.set_xticks(x)
-    ax.set_xticklabels([f"{t}*" if t in TRUMP_TRADE else t for t in UNIVERSE])
-    ax.set_ylim(0, ymax * 1.35)
+    ax.set_xticklabels([f"{t} *" if t in TRUMP_TRADE else t for t in UNIVERSE])
     ax.set_ylabel("mean target weight")
-    ax.set_title("Allocation around Nov-5 2024 election (±7d) with per-ticker permutation p (T-in − C-A)\n"
-                 "* = expected Trump-trade winners; ***p<.01 **p<.05 *p<.1 (20k perms, seed×day units)")
-    ax.legend(loc="upper right"); fig.tight_layout()
-    fig.savefig(FIG / f"election_allocation{_SFX}.png", dpi=130); plt.close(fig)
+    fs.title(ax, "Allocation around the Nov-5 2024 election  (±7 trading days)",
+             "* = expected Trump-trade winners · per-ticker permutation p (T-in − C-A) · "
+             "***p<.01  **p<.05  *p<.1")
+    fs.legend(ax, loc="upper right")
+    fig.tight_layout()
+    fs.save(fig, FIG / f"election_allocation{_SFX}.png")
     print("\nelection-window per-ticker T-in−C-A diff and permutation p:")
     for t in UNIVERSE:
         print(f"  {t:5} Δ={diffs[t]:+.3f}  p={pvals[t]:.3f}  (winner={t in TRUMP_TRADE})")
@@ -153,28 +161,24 @@ def _plot():
            "C-B": cmp["T-in_vs_C-B"]["C-B_timing_prescience"]}
     p_ac = cmp["T-in_vs_C-A"]["permutation_diff"]["p_value"]
     p_ab = cmp["T-in_vs_C-B"]["permutation_diff"]["p_value"]
-    fig, ax = plt.subplots(figsize=(7.5, 5.5))
+    fig, ax = plt.subplots(figsize=(7.8, 5.6))
+    glab3 = {"T-in": glabel["T-in"], "C-A": glabel["C-A"], "C-B": glabel["C-B"]}
     for i, g in enumerate(["T-in", "C-A", "C-B"]):
         p = pts[g]
-        ax.bar(i, p["point"], 0.6, color=colors[g])
+        ax.bar(i, p["point"], 0.62, color=colors[g], edgecolor="white", lw=0.6, zorder=3, label=glab3[g])
         ax.errorbar(i, p["point"], yerr=[[p["point"] - p["lo"]], [p["hi"] - p["point"]]],
-                    fmt="none", ecolor="k", capsize=5)
-    ax.axhline(0, color="k", lw=0.6); ax.set_xticks(range(3)); ax.set_xticklabels(["T-in", "C-A", "C-B"])
-    ax.set_ylabel("exposure-timing prescience (mean ± 95% bootstrap CI)")
-
-    def _bracket(i, j, y, p):
-        star = "*" if p < 0.1 else "ns"
-        ax.plot([i, i, j, j], [y, y + 0.012, y + 0.012, y], lw=1.1, color="k")
-        ax.text((i + j) / 2, y + 0.016, f"perm p={p:.3f} {star}", ha="center", va="bottom",
-                fontsize=9, color=("crimson" if p < 0.1 else "gray"))
+                    fmt="none", ecolor=fs.INK, capsize=5, lw=1.3, zorder=4)
+    fs.ygrid(ax); fs.zero_line(ax); fs.despine(ax)
+    ax.set_xticks(range(3)); ax.set_xticklabels(["T-in", "C-A", "C-B"])
+    ax.set_ylabel("exposure-timing prescience  (mean ± 95% bootstrap CI)")
 
     top = max(pts[g]["hi"] for g in ("T-in", "C-A", "C-B"))
-    _bracket(0, 1, top + 0.02, p_ac)        # T-in vs C-A
-    _bracket(0, 2, top + 0.07, p_ab)        # T-in vs C-B
-    ax.set_ylim(min(pts[g]["lo"] for g in pts) - 0.03, top + 0.13)
-    ax.set_title("Headline timing prescience + pairwise permutation tests\n"
-                 "(positive only for the treatment in-distribution)")
-    fig.tight_layout(); fig.savefig(FIG / f"timing_prescience_ci{_SFX}.png", dpi=130); plt.close(fig)
+    fs.bracket(ax, 0, 1, top + 0.02, p_ac, h=0.013, label=f"perm p = {p_ac:.3f}  {fs.sig_star(p_ac)}")
+    fs.bracket(ax, 0, 2, top + 0.075, p_ab, h=0.013, label=f"perm p = {p_ab:.3f}  {fs.sig_star(p_ab)}")
+    ax.set_ylim(min(pts[g]["lo"] for g in pts) - 0.03, top + 0.15)
+    fs.title(ax, "Headline timing prescience + pairwise permutation tests",
+             "positive only for the treatment in-distribution")
+    fig.tight_layout(); fs.save(fig, FIG / f"timing_prescience_ci{_SFX}.png")
     print(f"\npairwise permutation p — T-in vs C-A: {p_ac:.3f}   T-in vs C-B: {p_ab:.3f}")
 
     print("wrote ticker_prescience.png, election_allocation.png, timing_prescience_ci.png")

@@ -57,34 +57,51 @@ def _equity_by_date(group: str, model_tag: str, window: Window) -> pd.Series:
 
 
 def main():
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+
+    from leakage.run import figstyle as fs
+    plt = fs.plt
+    fs.use()
 
     t_in = _equity_by_date("T-in", _TREAT, IN_DIST)
     c_a = _equity_by_date("C-A", _CTRL, IN_DIST)
     c_b = _equity_by_date("C-B", _TREAT, OOD)
 
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(13, 5), gridspec_kw={"width_ratios": [1.3, 1]})
-    axL.plot(t_in.index, t_in.values, color="tab:green", label=f"T-in {_TREAT} (KNOWS 2024-H2)")
-    axL.plot(c_a.index, c_a.values, color="tab:blue", label=f"C-A {_CTRL} (control, same dates)")
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(13.5, 5.4), gridspec_kw={"width_ratios": [1.35, 1]})
+    axL.plot(t_in.index, t_in.values, color=fs.TREAT, lw=2.0, zorder=4,
+             label=f"T-in  {_TREAT}  (knows 2024-H2)")
+    axL.plot(c_a.index, c_a.values, color=fs.CTRL, lw=1.8, zorder=3,
+             label=f"C-A  {_CTRL}  (control, same dates)")
+    axL.axhline(1.0, color=fs.FAINT, lw=1.0, ls=":", zorder=1)
+    fs.ygrid(axL); fs.despine(axL)
+    axL.set_xlim(t_in.index.min(), t_in.index.max())
+    fs.title(axL, "In-distribution (2024-H2)", "same calendar dates — the only like-for-like overlay")
+    axL.set_xlabel("date"); axL.set_ylabel("equity  (start = 1.0)")
+    axL.legend(loc="lower right")
     for d, lab in [(AUG5, "Aug-5 crash"), (NOV5, "Nov-5 election")]:
-        axL.axvline(d, color="red", ls="--", lw=1); axL.text(d, axL.get_ylim()[1], lab,
-                                                             rotation=90, va="top", fontsize=8, color="red")
-    axL.axhline(1.0, color="k", lw=0.5, ls=":")
-    axL.set_title("In-distribution (2024-H2) — like-for-like, same calendar dates")
-    axL.set_xlabel("date (2024-H2)"); axL.set_ylabel("equity (start=1.0)"); axL.legend(loc="upper left")
-    axL.tick_params(axis="x", rotation=30)
+        fs.event_marker(axL, d, lab, y_frac=0.96, va="top", ha="left")
 
-    axR.plot(c_b.index, c_b.values, color="tab:orange", label=f"C-B {_TREAT} (same model, OOD)")
-    axR.axhline(1.0, color="k", lw=0.5, ls=":")
-    axR.set_title("Out-of-distribution time control (2026)")
-    axR.set_xlabel("date (2026)"); axR.legend(loc="upper left"); axR.tick_params(axis="x", rotation=30)
+    axR.plot(c_b.index, c_b.values, color=fs.OOD, lw=2.0, zorder=4,
+             label=f"C-B  {_TREAT}  (same model, OOD)")
+    axR.axhline(1.0, color=fs.FAINT, lw=1.0, ls=":", zorder=1)
+    fs.ygrid(axR); fs.despine(axR)
+    axR.set_xlim(c_b.index.min(), c_b.index.max())
+    fs.title(axR, "Out-of-distribution (2026)", "within-model time control — no memory of these dates")
+    axR.set_xlabel("date"); axR.legend(loc="upper left")
 
-    fig.suptitle("Equity by calendar date — treatment separates only where it has memory", y=1.02)
+    for ax in (axL, axR):
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
+        ax.tick_params(axis="x", rotation=0)
+
+    # The headline claim ("separates only where it has memory") is the qwen3 finding; for the
+    # Gemma run the treatment does NOT separate (it confabulates), so keep the suptitle neutral.
+    suptitle = {"ec2": "Equity by calendar date — the treatment separates only where it has memory"}.get(
+        _RUN, f"Equity by calendar date — {_TREAT} in-distribution vs out-of-distribution time control")
+    fig.suptitle(suptitle, y=1.00, fontsize=14, fontweight="bold")
     fig.tight_layout()
     out = FIG / f"equity_{_RUN}_bydate.png"
-    fig.savefig(out, dpi=130, bbox_inches="tight"); plt.close(fig)
+    fs.save(fig, out)
     print(f"wrote {out}")
     print(f"final equity — T-in={t_in.iloc[-1]:.3f}  C-A={c_a.iloc[-1]:.3f}  C-B={c_b.iloc[-1]:.3f}")
 

@@ -65,6 +65,7 @@ PYTHONPATH=src python -m leakage.run.main --tag ec2
 # EC2: bash infra/stage.sh && INSTANCE_PROFILE=<role> bash infra/launch_spot.sh
 # Gemma co-treatment:  LEAKAGE_FORCE_TREATMENT=gemma3:12b ...  (RUN_TAG=gemma)
 # Per-model in-vs-out: LEAKAGE_RUN_MODULE=leakage.run.per_model_windows ...
-# Figures/tables: leakage.run.{report_tables,redraw_equity,figures_extra,extra_analyses,
-#                 compare_runs,permodel_stats}
+# Figures/tables: leakage.run.{headline_figures,report_tables,redraw_equity,figures_extra,
+#                 extra_analyses,compare_runs,permodel_stats}
+#   headline_figures -> graphical abstract, knowledge-probe scorecard, DiD slope, Aug-5 null
 ```
