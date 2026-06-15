@@ -56,11 +56,19 @@ def build_context(window: Window, day: pd.Timestamp,
         f"LEAKAGE: context for {day.date()} reaches the realization day {realize_day}")
 
     rets = hist.pct_change()
+    last = hist.iloc[-1]
     feats = pd.DataFrame(index=UNIVERSE)
+    # All features are strictly causal price transforms of `hist` (rows dated <= day).
     feats["ret_1d"] = rets.iloc[-1]
-    feats["ret_5d"] = hist.iloc[-1] / hist.iloc[-6] - 1 if len(hist) > 5 else np.nan
-    feats["ret_20d"] = hist.iloc[-1] / hist.iloc[-21] - 1 if len(hist) > 20 else np.nan
+    feats["ret_5d"] = last / hist.iloc[-6] - 1 if len(hist) > 5 else np.nan
+    feats["ret_10d"] = last / hist.iloc[-11] - 1 if len(hist) > 10 else np.nan
+    feats["ret_20d"] = last / hist.iloc[-21] - 1 if len(hist) > 20 else np.nan
+    feats["ret_60d"] = last / hist.iloc[-61] - 1 if len(hist) > 60 else np.nan
     feats["vol_20d"] = rets.tail(20).std() * np.sqrt(252)
+    feats["dd_from_high"] = last / hist.cummax().iloc[-1] - 1            # drawdown from trailing high
+    feats["dist_ma50"] = last / hist.tail(50).mean() - 1                 # price vs 50d MA
+    # realized-vol regime: short-window vol / full-window vol (>1 = vol picking up)
+    feats["vol_regime"] = (rets.tail(10).std() / rets.std()).round(2)
 
     recent_returns = {
         t: [round(float(x), 4) for x in rets[t].tail(recent).fillna(0).tolist()]
@@ -84,13 +92,15 @@ def render_context(ctx: DayContext, portfolio: dict[str, float], cash: float) ->
         + (", ".join(f"{k}=${v:,.0f}" for k, v in portfolio.items() if v) or "none") + ".",
         "",
         "TRAILING MARKET DATA (as of today's close; you may not see any later data):",
-        "ticker  last_close   ret_1d   ret_5d  ret_20d  ann_vol_20d",
+        "ticker  last_close  ret_1d  ret_5d ret_10d ret_20d ret_60d  ann_vol  dd_high  vs_ma50  vol_reg",
     ]
     for t in ctx.tickers:
         f = ctx.features.loc[t]
         lines.append(
-            f"{t:<6}  {ctx.last_close[t]:>9.2f}  "
-            f"{f.ret_1d:>+7.3f}  {f.ret_5d:>+7.3f}  {f.ret_20d:>+7.3f}  {f.vol_20d:>9.3f}"
+            f"{t:<6} {ctx.last_close[t]:>10.2f} "
+            f"{f.ret_1d:>+6.3f} {f.ret_5d:>+6.3f} {f.ret_10d:>+6.3f} {f.ret_20d:>+6.3f} "
+            f"{f.ret_60d:>+6.3f} {f.vol_20d:>7.3f} {f.dd_from_high:>+7.3f} {f.dist_ma50:>+7.3f} "
+            f"{f.vol_regime:>6.2f}"
         )
     lines.append("")
     lines.append("Recent daily returns (oldest→newest, last 15):")

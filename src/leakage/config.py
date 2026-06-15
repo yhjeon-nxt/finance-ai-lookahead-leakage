@@ -129,7 +129,7 @@ GROUPS = [
 ]
 
 # Experiment knobs
-TRAILING_DAYS = 60        # length of price history shown to the agent at each decision
+TRAILING_DAYS = 70        # length of price history shown (covers ret_60d + 50d MA features)
 SEEDS = [int(s) for s in os.environ.get("LEAKAGE_SEEDS", "0,1,2").split(",") if s.strip()]
 AGENT_TEMPERATURE = 0.7   # > 0 so seeds differ
 STARTING_CASH = 1_000_000.0

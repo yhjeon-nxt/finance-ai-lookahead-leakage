@@ -104,8 +104,9 @@ def run_backtest(group: Group, client: LLMClient, seed: int,
                               if prev_ret is not None else None)
                 text = render_context(ctx, portfolio={t: 0.0 for t in UNIVERSE}, cash=equity)
                 dec = agent.decide(key, text, seed=seed + i, reflection=reflection)
-                fh.write(json.dumps(asdict(dec)) + "\n")
-                fh.flush()
+                if dec.parse_ok:   # cache only successes; a failure is retried on resume
+                    fh.write(json.dumps(asdict(dec)) + "\n")
+                    fh.flush()
             decisions.append(dec)
 
             # On a parse failure carry forward the prior book (realistic) for the EQUITY curve,

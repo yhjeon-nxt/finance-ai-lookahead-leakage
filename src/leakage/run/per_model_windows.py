@@ -67,12 +67,17 @@ def _run_cell(tag: str, window: Window, seeds, mock: bool):
 
 
 def main():
+    import os
     seeds = SEEDS
+    # LEAKAGE_PERMODEL_ONLY=<tag[,tag]> runs a subset (one model per EC2 instance, in parallel);
+    # each instance's partial eval_permodel.json is merged locally afterwards.
+    only = [t.strip() for t in os.environ.get("LEAKAGE_PERMODEL_ONLY", "").split(",") if t.strip()]
+    models = [m for m in MODELS if m["tag"] in only] if only else MODELS
     for w in (Y2023, Y2024, Y2025, Y2026):
         download_prices(w)
     out = {"design": "per-model in-train vs out-of-train (1yr each)", "seeds": seeds, "models": {}}
 
-    for m in MODELS:
+    for m in models:
         tag = m["tag"]
         print(f"\n=== {tag}  IN={m['in'].name}  OUT={m['out'].name}  ({m['recall']}) ===", flush=True)
         in_res, in_ret = _run_cell(tag, m["in"], seeds, mock=False)
