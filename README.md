@@ -50,13 +50,21 @@ docs/         design spec
 
 ## Cost discipline
 
-Develop + smoke-test locally; burst to a **single `g5.xlarge` spot** instance for the real
-run with an idempotent resumable cache and a self-terminate backstop. Artifacts stream to
-`s3://neuroxt-personal/yhjeon/`. Target total compute cost **< ~$2**.
+Develop + smoke-test locally; burst to **single `g6e.xlarge` spot** instances (L40S 48GB,
+ap-northeast-2) for the real runs, each with an idempotent resumable cache and a self-terminate
+backstop. Artifacts stream to `s3://neuroxt-personal/yhjeon/`. Cost: main run **< $1**; **≈$5.4**
+total across all 5 runs (main + Gemma co-treatment + 4-model per-model sweep).
 
 ## Reproduce
 
 ```bash
-pip install -r requirements.txt
-# (Phase scripts and a Makefile/CLI land as the build proceeds — see PROGRESS.md)
+pip install -r requirements.txt                 # needs pyarrow (parquet), ollama, yfinance
+PYTHONPATH=src python -m leakage.data.ingest     # cache prices
+# Main qwen3-vs-controls run (local ollama or EC2 via infra/):
+PYTHONPATH=src python -m leakage.run.main --tag ec2
+# EC2: bash infra/stage.sh && INSTANCE_PROFILE=<role> bash infra/launch_spot.sh
+# Gemma co-treatment:  LEAKAGE_FORCE_TREATMENT=gemma3:12b ...  (RUN_TAG=gemma)
+# Per-model in-vs-out: LEAKAGE_RUN_MODULE=leakage.run.per_model_windows ...
+# Figures/tables: leakage.run.{report_tables,redraw_equity,figures_extra,extra_analyses,
+#                 compare_runs,permodel_stats}
 ```

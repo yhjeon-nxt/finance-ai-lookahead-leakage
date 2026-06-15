@@ -133,7 +133,7 @@ def _plot(out: dict):
                 color=("crimson" if p < 0.1 else "gray"))
     a1.set_ylim(min(did + [0]) - ymax * 0.05, ymax * 1.30)
     a1.set_xticks(x); a1.set_xticklabels(tags, rotation=20); a1.set_ylabel("DiD (in − out, regime-adjusted)")
-    a1.set_title("Per-model leakage DiD + block-bootstrap p(DiD>0) — green=recalls, orange=confabulates, gray=denies")
+    a1.set_title("Per-model leakage DiD + one-sided bootstrap p (H0: no leakage; small=leakage) — green=recalls, orange=confab, gray=denies")
     a2.bar(x - 0.2, sin, 0.4, label="in-train year", color="tab:green")
     a2.bar(x + 0.2, sout, 0.4, label="out-of-train year", color="tab:red")
     a2.axhline(0, color="k", lw=0.6); a2.set_xticks(x); a2.set_xticklabels(tags, rotation=20)

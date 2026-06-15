@@ -30,8 +30,11 @@ LLM-agent era.
 EC2 GPU spot instance), the treatment trading its in-distribution window earned **Sharpe 1.76 /
 +25%** versus **0.30** (model control) and **0.49** (same model, out-of-distribution), showed
 positive next-day prescience where the controls showed none, and — most tellingly — **de-risked
-ahead of the 2024-08-05 crash it demonstrably remembers while showing no edge around the election
-it does not**. The regime-adjusted difference-in-differences is positive on every metric. Support
+ahead of the 2024-08-05 crash it demonstrably remembers** (its clearest, portfolio-level
+pre-event signal). Around the election it shows no *exposure*-timing edge but a narrower
+*composition* tilt — a significant overweight of the bank winner JPM (§4.8) — even though it
+verbally refuses the election question, i.e. leakage that is behavioural where verbal recall is
+suppressed. The regime-adjusted difference-in-differences is positive on every metric. Support
 for parametric leakage is **moderate and internally consistent**, though statistically modest at
 this sample size (cross-model p≈0.075). **An independent-family co-treatment (`gemma3:12b`,
 official Aug-2024 cutoff) did *not* reproduce the clean signature** — it **confabulates** the
@@ -137,7 +140,7 @@ in-distribution; it isolates leakage from raw capability. **C-A** corroborates w
 independent, verifiably-ignorant model. The treatment/control model-family difference is a known
 confound for the C-A comparison; the within-model C-B comparison neutralises it.
 
-**Regime confound and the difference-in-differences correction.** An adversarial review (§3.11)
+**Regime confound and the difference-in-differences correction.** An adversarial review (§3.9)
 identified a first-order threat: the 2024-H2 and 2026 windows differ not only in whether the
 model has "seen" them but in *market regime* — notably next-day return autocorrelation
 (momentum-persistent vs mean-reverting). Because the agent is partly a trailing-return trader,
@@ -211,6 +214,13 @@ news. This is the methodological keystone: with a price-only feed, the agent has
 legitimate channel** to anticipate an unsignalled event such as the Aug-5 crash, so any
 pre-emptive de-risking must come from parametric memory.
 
+**Universe & window choice.** The 7-name universe (SPY, QQQ, NVDA, TSLA, JPM, IWM, COIN) is chosen
+so the two 2024-H2 event anchors have *identifiable, namable* beneficiaries — the Nov-5
+"Trump trade" (banks JPM, small-caps IWM, TSLA, crypto-proxy COIN) and the AI complex (NVDA, QQQ)
+— which is what makes the per-ticker forensics in §4.8 interpretable. 2024-H2 is the window
+bracketed by two memorable, dated shocks (Aug-5 yen-carry crash, Nov-5 election); 2026 is the
+nearest fully-out-of-cutoff window with data available at run time.
+
 ### 3.7 Metrics
 
 Financial: total return, annualised Sharpe, max drawdown, turnover. Leakage/foresight:
@@ -237,7 +247,7 @@ itself rather than the regime-confounded raw in-vs-out gap. *Caveat:* the simple
 (mildly anti-conservative); they are treated as corroborative, with the block-bootstrap DiD and
 the cross-model ordering carrying the primary inference.
 
-### 3.11 Pre-run adversarial verification
+### 3.9 Pre-run adversarial verification
 
 Before spending any compute on results, the full design and codebase were audited by a
 **multi-agent adversarial review** (7 independent reviewers — backtest mechanics, pipeline
@@ -253,16 +263,17 @@ auto-selection that ignored the OOD-denial gate. The full ledger is in `report/v
 This verification step is itself part of the contribution: LLM-agent experiments are easy to get
 subtly wrong, and adversarial pre-registration of the analysis materially hardened the conclusions.
 
-### 3.9 Infrastructure & cost
+### 3.10 Infrastructure & cost
 
 Developed and smoke-tested locally (Apple-Silicon ollama), then executed on **one
 `g6e.xlarge` spot** instance (L40S 48 GB, ap-northeast-2, ≈$0.54/hr). Data prepared locally and
 staged to S3 so the instance does no yfinance I/O; a resumable decision cache (keyed by
 group·model·window·seed·date) makes spot interruption cost ≤ one decision; logs/equity/raw
 outputs stream to `s3://neuroxt-personal/yhjeon/finance-ai-leakage/` every 30–60 s; the
-instance self-terminates on completion. Estimated total compute cost **< $2**.
+instance self-terminates on completion. The main qwen3 run cost **< $1**; **total across all
+runs** (main + Gemma co-treatment + the 4-model sweep, §4.9–4.10) **≈ $5.4** (Appendix A).
 
-### 3.10 Pivots from the baseline prompt
+### 3.11 Pivots from the baseline prompt
 
 The assignment prompt supplied example parameters and explicit adaptation rights. Deviations:
 (i) **open local models instead of GPT-4o** — yields a *real, controllable* cutoff gap at zero
@@ -284,7 +295,7 @@ then **separates decisively at the Nov-5 election** (→1.25 vs 1.04). **Right:*
 the 2026 out-of-distribution window (orange) drifts and recovers to ~1.03. The treatment pulls
 away **only where it has memory** — a different model on the same dates (blue) and the same model
 on unseen dates (orange) both stay roughly flat. (An ordinal-axis overlay of all three is in
-`results/figures/equity_ec2.png`; the calendar-date split here is the honest comparison, since
+`figures/equity_ec2.png`; the calendar-date split here is the honest comparison, since
 the only like-for-like pair is T-in vs C-A.)*
 
 ### 4.1 Financial performance
@@ -297,6 +308,13 @@ the only like-for-like pair is T-in vs C-A.)*
 The treatment earns a Sharpe of **1.76** on the window it was trained on, versus **0.30**
 (different model, same window) and **0.49** (same model, unseen window). The advantage appears
 *only* in-distribution.
+
+*Caveats.* These Sharpe figures are **descriptive** — at ~100–128 days the standard errors are
+large and we run no between-group Sharpe test; formal inference rests on the foresight/timing
+metrics and the DiD (§4.4–4.5, §4.10), not on raw Sharpe. Returns are **gross of transaction
+costs**; since all arms share the same daily-rebalance cost structure and comparable turnover
+(0.69–0.88), the *leakage contrast* (T-in vs C-A/C-B, and the DiD) is approximately cost-invariant
+even though absolute returns are not net.
 
 ### 4.2 Leakage / foresight metrics
 | Group | Ticker prescience | Exposure timing | Conf-wtd timing |
@@ -314,8 +332,10 @@ Only T-in shows *positive* prescience/timing; both controls are ≈0 or negative
 | C-A | −0.125 (did *not* de-risk) | +0.060 |
 
 The treatment **cut risk before the 2024-08-05 crash** — an event the probe shows it *knows* —
-while the control did not. It shows **no** election-timing edge, again *consistent with the
-probe*, where qwen3:8b recalled the crash but refused/Did not know the election outcome. Leakage
+while the control did not. (The agent is **long-only**, so anticipation can only show up as
+*reducing exposure to cash*, never shorting; the de-risk metric is thus conservative — it cannot
+capture short-side foresight.) It shows **no** election-timing edge, again *consistent with the
+probe*, where qwen3:8b recalled the crash but refused/did not surface the election outcome. Leakage
 tracks exactly what the model demonstrably remembers.
 
 ### 4.4 Headline statistical tests (seed-averaged per-day series)
@@ -334,7 +354,7 @@ consistent but not significant at this sample size (~100–128 days × 3 seeds) 
 in-distribution; both controls are negative. The wide intervals make the underpowering explicit.*
 
 ### 4.5 Within-model foresight gap + regime-adjusted difference-in-differences
-| Metric | LLM gap (T-in−C-B) | No-memory baseline gap | **DiD (leakage)** |
+| Metric | LLM gap (T-in−C-B) | No-memory baseline gap (MockClient momentum, same windows/seeds) | **DiD (leakage)** |
 |---|---|---|---|
 | ticker prescience | +0.005 | −0.021 | **+0.026** |
 | exposure timing | +0.093 | −0.042 | **+0.136** |
@@ -379,12 +399,13 @@ ticker with a permutation test (20k perms over seed×day units):
 *Mean target weight around the Nov-5 election with per-ticker permutation p-values; * = expected
 Trump-trade winners. Crimson = p<0.1.*
 
-The treatment **significantly overweights JPM** (banks; Δ=+0.088, **p=0.001**, survives a
-7-ticker Bonferroni correction) and **marginally IWM** (small caps; Δ=+0.049, p=0.077) — both
-canonical Trump-trade beneficiaries — while showing **no significant tilt on the non-election
-names** (SPY/QQQ/NVDA, all p>0.19, and if anything the control holds *more* SPY). The other two
-winners (TSLA, COIN) tilt positive but not significantly. So the election tilt is real but
-*selective* (strongest on banks), not a blanket basket bet.
+The treatment **significantly overweights JPM** (banks; Δ=+0.088, **p=0.001** — the only ticker
+to survive a 7-ticker Bonferroni correction, α/7≈0.0071). **IWM** (small caps; Δ=+0.049, p=0.077)
+tilts the same way but is **only suggestive** — it does not survive Bonferroni and is not
+significant even uncorrected. The other two winners (TSLA, COIN) tilt positive but not
+significantly, and the non-election names show **no positive tilt** (SPY/QQQ/NVDA, all p>0.19; the
+control if anything holds *more* SPY). So the election tilt is **real but narrow** — robust only
+on banks (JPM), not a blanket basket bet.
 
 This is striking because the cutoff probe shows qwen3:8b **verbally refuses** the election
 question (RLHF guardrail) — yet its *allocation* still tilts significantly toward a key winner.
@@ -443,16 +464,22 @@ one **inside** the model's training cutoff and one **after** it. We ran this for
 for the regime-adjusted DiD. The OUT window is chosen per model to be genuinely post-cutoff (for
 `qwen3`, a 2025-release model that partly knows 2025, the only clean OOD year is 2026).
 
-| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | p(DiD>0)¹ |
+All four models trade ~1 full **calendar year** IN vs a full year OUT (so the Sharpe levels here
+differ from the half-year §4.1/§4.9 figures — these are *different, longer windows*, not a
+restatement):
+
+| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | one-sided p¹ |
 |---|---|---|---|---|---|---|
 | `qwen3:8b` | 2024 — **genuinely recalls** | 2026 | +1.91 | +0.49 | **+0.119** | 0.16 |
 | `qwen2.5:7b` | 2023 — knows | 2025 | +1.79 | +0.50 | +0.082 | 0.15 |
 | `gemma3:12b` | 2024 — **confabulates** | 2025 | +1.03 | +0.34 | +0.040 | 0.30 |
 | `llama3.1:8b` | 2023 — weak | 2025 | +2.67 | +1.17 | +0.002 | 0.48 |
 
-¹ One-sided p that DiD>0 from a **circular block bootstrap** (block=5) of the DiD statistic
-itself — autocorrelation-robust, and testing the regime-adjusted DiD rather than the
-regime-confounded raw in-vs-out gap (see §3.8).
+¹ One-sided bootstrap p for H₀: DiD ≤ 0 (no leakage) — i.e. the fraction of a **circular block
+bootstrap** (block=5) of the DiD statistic that falls ≤ 0; **smaller = stronger leakage
+evidence**. Autocorrelation-robust, and testing the regime-adjusted DiD rather than the
+regime-confounded raw in-vs-out gap (see §3.8). All four are non-significant; every DiD CI
+includes 0.
 
 ![Per-model in vs out](figures/per_model_in_vs_out.png)
 
@@ -465,9 +492,10 @@ in-year) next (+0.082), `gemma3` (which *confabulates* its 2024 in-year — "Bid
 genuinely remembers its in-window, the larger its in−out leakage gap.*
 
 **Honesty about power.** No single model's DiD is significant at 3 seeds × ~250 days — the
-block-bootstrap one-sided p(DiD>0) is 0.15 (qwen2.5), 0.16 (qwen3), 0.30 (gemma), 0.48 (llama),
-and every DiD CI includes 0. The evidence is in the **cross-model ordering** (recall-positive
-models have the largest DiD and the smallest p), not in per-model significance. We also note the methodological lesson the run surfaced: with
+block-bootstrap one-sided p (H₀: no leakage) is 0.15 (qwen2.5), 0.16 (qwen3), 0.30 (gemma),
+0.48 (llama), and every DiD CI includes 0. The evidence is in the **cross-model ordering of the
+DiD point estimates** (qwen3 > qwen2.5 > gemma > llama), not per-model significance; the two Qwen
+p-values (0.15 vs 0.16) are statistically indistinguishable and are not read as separating them. We also note the methodological lesson the run surfaced: with
 `qwen3`'s OUT window mis-set to 2025 (which it partly knows), its DiD was −0.07; moving OUT to the
 genuinely-unseen 2026 flipped it to +0.119 — **the OUT window must be verified post-cutoff per
 model**, or leakage is masked.
@@ -489,9 +517,10 @@ The evidence triangulates:
    that crash. It shows *no* election-timing edge — and the probe shows it does *not* know the
    election outcome. The behaviour mirrors the model's measured memory item-by-item; a generic
    "smarter model" or a regime artifact would not produce this selective pattern.
-3. **Regime is ruled out.** The DiD against a no-memory momentum agent is positive on every
-   metric, and the baseline's own in-dist−OOD gap is negative — the 2024-vs-2026 regime works
-   *against* the result.
+3. **Regime is accounted for (not the explanation).** The DiD against a no-memory momentum agent
+   is positive on every metric, and the baseline's own in-dist−OOD gap is negative — so the
+   2024-vs-2026 regime works *against* the result, not for it. (The DiD is positive but its CI
+   still includes 0, so regime is netted out, not a *significant* effect "ruled out".)
 4. **Cross-family dependence (pre-registered H2 on family 2).** The signature did **not** cleanly
    replicate on `gemma3:12b` (§4.9): in-dist Sharpe 0.75, no crash de-risk (p=0.54), weak/ns DiD.
    The reason is diagnostic — Gemma *confabulates* 2024-H2 (projects "Biden" as winner) despite an
@@ -514,18 +543,18 @@ the former produces unfalsifiable, plausible-sounding rationales that can drive 
 |---|---|
 | **Pipeline leakage** (future data in the agent's feed) | Price-only causal context + hard causality assertion; the only foresight channel is parametric memory. |
 | **Regime confound** (2024 vs 2026 differ in dynamics) | Difference-in-differences vs a no-memory momentum baseline; the baseline's own gap is *negative*. |
-| **Model-family/capability confound** (treatment vs control) | Within-model in-dist vs OOD contrast (same backbone); multi-period robustness pass. |
+| **Model-family/capability confound** (treatment vs control) | Within-model in-dist vs OOD contrast (same backbone); independent-family co-treatment (§4.9); 4-model in-vs-out sweep (§4.10). |
 | **Treatment-selection circularity** | Selecting a model that *knows* the period then testing whether it *trades on* it is sound (independently affirmed by the adversarial review). |
 | **Lucky seed / cherry-picking** | ≥3 seeds; inter-seed band on the exposure figure; pseudo-event null. |
 | **Spurious pre-event timing** | Calibrated empirical p-value via 98 random pseudo-events (§4.7). |
 | **Self-reported cutoffs unreliable** | Empirical cutoff + price-recall probes, not model cards. |
-| **Implementation bugs** | 7-dimension adversarial multi-agent review; 18 confirmed issues fixed pre-run (§3.11, `verification_findings.md`). |
+| **Implementation bugs** | 7-dimension adversarial multi-agent review; 18 confirmed issues fixed pre-run (§3.9, `verification_findings.md`). |
 | **Parse-failure contamination** | Parse-fail days carried forward for equity but excluded from foresight metrics; `n_parse_fail = 0` on the final run. |
 
 ### 5.5 Limitations
 - **Statistical power.** ~100–250 trading days per cell; the cross-model contrast is marginal
   (p≈0.075) and the single-pair within-model contrast is non-significant (p≈0.40). We report
-  *moderate* support; the multi-period pass (§4.7-adjacent / §4.8) is the power remedy.
+  *moderate* support; the 4-model in-vs-out sweep (§4.10) is the power/robustness remedy.
 - **Family dependence (tested).** We ran an independent-family co-treatment (`gemma3:12b`,
   official Aug-2024 cutoff, §4.9). It did **not** reproduce the clean signature — it *confabulates*
   the period rather than recalling it (pre-registered H2). So the leakage is **demonstrated on
@@ -575,14 +604,43 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
   `temperature=0.7`, `num_predict=700`, `seed ∈ {0,1,2}`; 600 s client timeout for 32B cold-loads.
 - **Universe:** SPY, QQQ, NVDA, TSLA, JPM, IWM, COIN; daily rebalance; long-only; 60-day trailing
   context; start equity 1.0.
-- **Windows:** in-dist 2024-07-01…12-31; OOD 2026-01-01…05-31 (multi-period adds 2024-H1 and
-  2026 Q1/Q2). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
+- **Windows:** main run — in-dist 2024-07-01…12-31, OOD 2026-01-01…05-31. Per-model sweep (§4.10)
+  — full calendar years 2023 / 2024 / 2025 and 2026-01…06, paired per model (IN inside cutoff,
+  OUT after). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
 - **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
   + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
   `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $5.4 across 5 EC2 spot runs (qwen3 main ≈ $0.8 incl. 3 aborted boots
   that each self-terminated cleanly; Gemma co-treatment ≈ $0.6; per-model 4×in/out sweeps ≈ $4).
 - **Stats:** seed-averaged per-day prescience contributions; circular block bootstrap + permutation
   tests; pseudo-event null with 98 random pseudo-events.
+
+### Appendix C — Agent prompt & reflection (verbatim)
+
+The **identical** system prompt is used for every group; only the model and the date window vary.
+This is the load-bearing "prompt neutrality" claim — it never hints the date is historical, names
+no future event, and does not instruct the model to use outside knowledge:
+
+```
+You are a disciplined portfolio manager making a single daily allocation decision for a
+long-only equity portfolio. You may allocate across the listed tickers and hold the rest in cash.
+
+You are given ONLY the market data shown in the user message (trailing prices and returns as of
+today's close). Base your decision on that information and sound risk management. Do not assume
+access to any information beyond what is shown.
+
+Respond with a SINGLE JSON object and nothing else, with exactly these fields:
+{ "analysis": "<2-3 sentences ...>", "target_weights": {"TICKER": <float in [0,1]>, ...},
+  "confidence": <float in [0,1]>, "rationale": "<one short sentence>" }
+
+Constraints: weights are fractions of total portfolio value, each in [0,1], sum <= 1.0 (remainder
+is cash). Use only tickers from the provided universe.
+```
+
+The per-day **user** message is the rendered causal context (§3.6) — trailing prices/returns ≤ T
+— optionally prefixed by a one-line **reflection** on the prior day's realised P&L
+(`"Portfolio gained/lost X% in the most recent session (you were Y% invested)."`). The reflection
+carries no look-ahead (it reports an already-realised outcome). Reasoning models (qwen3) are run
+with `think=False` (Appendix B).
 
 ### Appendix B — The inference-config hazard
 qwen3 is a hybrid reasoning model; under `format=json` with thinking enabled it emits empty
