@@ -225,10 +225,17 @@ mock client was used to confirm the metrics return ≈0 under the null (they do)
 Prescience is expressed as a per-day contribution `z(signal)·z(return)` (mean ≈ Pearson r). To
 avoid pseudo-replication we **average the contribution across seeds per trading day** (one
 observation per day, not day×seed) before inference. We then use a **circular fixed-length block
-bootstrap** for CIs and a **label-permutation test** for group differences (the permutation test
-makes no block-length assumption and carries the headline inference). We report effect sizes and
-95% CIs, and treat the windows' modest sample sizes (~100–128 days) as a power limitation rather
-than over-claiming significance.
+bootstrap** for CIs and a **label-permutation test** for group differences. We report effect
+sizes and 95% CIs, and treat the windows' modest sample sizes (~100–128 days) as a power
+limitation rather than over-claiming significance.
+
+**Significance of the DiD (§4.10).** The headline leakage statistic is the difference-in-
+differences, so it is tested directly with a **circular block bootstrap** (block=5) of the DiD —
+resampling per-day contributions in blocks to respect autocorrelation, and bootstrapping the DiD
+itself rather than the regime-confounded raw in-vs-out gap. *Caveat:* the simpler group-difference
+**permutation tests** (§4.4) shuffle individual days and are therefore not autocorrelation-robust
+(mildly anti-conservative); they are treated as corroborative, with the block-bootstrap DiD and
+the cross-model ordering carrying the primary inference.
 
 ### 3.11 Pre-run adversarial verification
 
@@ -436,12 +443,16 @@ one **inside** the model's training cutoff and one **after** it. We ran this for
 for the regime-adjusted DiD. The OUT window is chosen per model to be genuinely post-cutoff (for
 `qwen3`, a 2025-release model that partly knows 2025, the only clean OOD year is 2026).
 
-| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | perm p |
+| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | p(DiD>0)¹ |
 |---|---|---|---|---|---|---|
-| `qwen3:8b` | 2024 — **genuinely recalls** | 2026 | +1.91 | +0.49 | **+0.119** | 0.57 |
-| `qwen2.5:7b` | 2023 — knows | 2025 | +1.79 | +0.50 | +0.082 | 0.22 |
-| `gemma3:12b` | 2024 — **confabulates** | 2025 | +1.03 | +0.34 | +0.040 | 0.79 |
-| `llama3.1:8b` | 2023 — weak | 2025 | +2.67 | +1.17 | +0.002 | 0.84 |
+| `qwen3:8b` | 2024 — **genuinely recalls** | 2026 | +1.91 | +0.49 | **+0.119** | 0.16 |
+| `qwen2.5:7b` | 2023 — knows | 2025 | +1.79 | +0.50 | +0.082 | 0.15 |
+| `gemma3:12b` | 2024 — **confabulates** | 2025 | +1.03 | +0.34 | +0.040 | 0.30 |
+| `llama3.1:8b` | 2023 — weak | 2025 | +2.67 | +1.17 | +0.002 | 0.48 |
+
+¹ One-sided p that DiD>0 from a **circular block bootstrap** (block=5) of the DiD statistic
+itself — autocorrelation-robust, and testing the regime-adjusted DiD rather than the
+regime-confounded raw in-vs-out gap (see §3.8).
 
 ![Per-model in vs out](figures/per_model_in_vs_out.png)
 
@@ -453,9 +464,10 @@ in-year) next (+0.082), `gemma3` (which *confabulates* its 2024 in-year — "Bid
 (+0.040), and `llama3.1` ≈0 (+0.002). This is the hypothesis's signature: *the more a model
 genuinely remembers its in-window, the larger its in−out leakage gap.*
 
-**Honesty about power.** No single model's in-vs-out permutation test is significant at 3 seeds ×
-~250 days (p = 0.22–0.84); the evidence is in the **cross-model ordering of the DiD point
-estimates**, not per-model p-values. We also note the methodological lesson the run surfaced: with
+**Honesty about power.** No single model's DiD is significant at 3 seeds × ~250 days — the
+block-bootstrap one-sided p(DiD>0) is 0.15 (qwen2.5), 0.16 (qwen3), 0.30 (gemma), 0.48 (llama),
+and every DiD CI includes 0. The evidence is in the **cross-model ordering** (recall-positive
+models have the largest DiD and the smallest p), not in per-model significance. We also note the methodological lesson the run surfaced: with
 `qwen3`'s OUT window mis-set to 2025 (which it partly knows), its DiD was −0.07; moving OUT to the
 genuinely-unseen 2026 flipped it to +0.119 — **the OUT window must be verified post-cutoff per
 model**, or leakage is masked.

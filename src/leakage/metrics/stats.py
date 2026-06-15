@@ -78,6 +78,43 @@ def permutation_diff(a: pd.Series, b: pd.Series, n_perm: int = 5000,
     return {"diff": float(obs), "p_value": float((count + 1) / (n_perm + 1))}
 
 
+def block_bootstrap_did(in_real: pd.Series, out_real: pd.Series,
+                        in_mock: pd.Series, out_mock: pd.Series,
+                        n_boot: int = 5000, block: int = 5, ci: float = 0.95,
+                        seed: int = 0) -> dict:
+    """Block-bootstrap test of the difference-in-differences leakage statistic:
+
+        DiD = [mean(in_real) - mean(out_real)] - [mean(in_mock) - mean(out_mock)]
+
+    Resamples each per-day contribution series in CIRCULAR BLOCKS (preserving short-range
+    autocorrelation, unlike individual-day permutation) and reports the DiD point estimate, a
+    bootstrap CI, and a one-sided p-value (bootstrap evidence that DiD > 0). This tests the
+    actual regime-adjusted leakage quantity, not the regime-confounded raw in-vs-out gap.
+    """
+    arrs = [s.dropna().values for s in (in_real, out_real, in_mock, out_mock)]
+    if any(len(a) < 3 for a in arrs):
+        return {"point": float("nan"), "lo": float("nan"), "hi": float("nan"),
+                "p_gt_0": float("nan")}
+
+    def _did(samples):
+        return ((samples[0].mean() - samples[1].mean())
+                - (samples[2].mean() - samples[3].mean()))
+
+    point = _did(arrs)
+    rng = np.random.default_rng(seed)
+    boots = np.empty(n_boot)
+    for b in range(n_boot):
+        rs = [a[_block_indices(len(a), block, rng)] for a in arrs]
+        boots[b] = _did(rs)
+    alpha = (1 - ci) / 2
+    return {
+        "point": float(point),
+        "lo": float(np.quantile(boots, alpha)),
+        "hi": float(np.quantile(boots, 1 - alpha)),
+        "p_gt_0": float((boots <= 0).mean()),   # one-sided evidence DiD>0 (autocorr-robust)
+    }
+
+
 def stationary_bootstrap_sharpe(rets: pd.Series, n_boot: int = 3000, block: int = 5,
                                 ci: float = 0.95, seed: int = 0) -> dict[str, float]:
     from leakage.metrics.financial import sharpe

@@ -24,7 +24,13 @@
       "perm_diff": -0.01068144457928314,
       "n_in_days": 249,
       "n_out_days": 249,
-      "parse_fail": 0
+      "parse_fail": 0,
+      "did_block": {
+        "point": 0.002128276081491954,
+        "lo": -0.16113552557856575,
+        "hi": 0.15894344191596962,
+        "p_gt_0": 0.4762
+      }
     },
     "qwen2.5:7b": {
       "cutoff": "~2023-10",
@@ -44,7 +50,13 @@
       "perm_diff": 0.06888162144705298,
       "n_in_days": 249,
       "n_out_days": 249,
-      "parse_fail": 1
+      "parse_fail": 1,
+      "did_block": {
+        "point": 0.08080965439305694,
+        "lo": -0.07782733551048675,
+        "hi": 0.2408724314908003,
+        "p_gt_0": 0.1498
+      }
     },
     "qwen3:8b": {
       "cutoff": "~2024-Q4",
@@ -64,7 +76,13 @@
       "perm_diff": 0.06168397981337394,
       "n_in_days": 251,
       "n_out_days": 111,
-      "parse_fail": 1
+      "parse_fail": 1,
+      "did_block": {
+        "point": 0.11883619373815518,
+        "lo": -0.10634645067106882,
+        "hi": 0.37974460209241495,
+        "p_gt_0": 0.1598
+      }
     },
     "gemma3:12b": {
       "cutoff": "2024-08",
@@ -84,7 +102,14 @@
       "perm_diff": 0.01477521466812139,
       "n_in_days": 251,
       "n_out_days": 249,
-      "parse_fail": 0
+      "parse_fail": 0,
+      "did_block": {
+        "point": 0.039801035960713,
+        "lo": -0.11728604172712821,
+        "hi": 0.2013086298163242,
+        "p_gt_0": 0.3024
+      }
     }
-  }
+  },
+  "did_significance_method": "circular block bootstrap (block=5) of the DiD = [in-out]_real - [in-out]_mock; one-sided p = P(DiD<=0)"
 }
