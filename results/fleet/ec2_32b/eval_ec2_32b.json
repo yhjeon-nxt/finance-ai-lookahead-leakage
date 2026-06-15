@@ -1,0 +1,209 @@
+{
+  "tag": "ec2_32b",
+  "groups": {
+    "C-A": {
+      "model": "qwen2.5:32b",
+      "financial": {
+        "total_return": 0.232732329811439,
+        "ann_return": 0.5368184494989204,
+        "ann_vol": 0.342883419284331,
+        "sharpe": 1.2928518125702966,
+        "max_drawdown": -0.16062789435568045,
+        "n_days": 127.0,
+        "turnover": 0.7834656084656086
+      },
+      "prescience": {
+        "ticker_prescience": 0.0008243254788199474,
+        "exposure_timing": 0.058063969621486834,
+        "conf_weighted_timing": 0.04614394207054293
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.4033333333333333,
+        "us_election_trump_trade": 0.04833333333333334,
+        "event_timing_mean": 0.22583333333333333
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.011186578632480614,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.030459977811863072,
+        "us_election_trump_trade_port_ret": 0.12009761603706563,
+        "us_election_trump_trade_excess_vs_mkt": 0.016554333133373497
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 87,
+          "rally": 2,
+          "downturn": 2,
+          "rebound": 1,
+          "spike": 1
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "C-B": {
+      "model": "qwen3:32b",
+      "financial": {
+        "total_return": 0.04821546394937478,
+        "ann_return": 0.12814044953304107,
+        "ann_vol": 0.16775127393880332,
+        "sharpe": 0.7679175181786327,
+        "max_drawdown": -0.10844707378217329,
+        "n_days": 101.0,
+        "turnover": 0.6408333333333333
+      },
+      "prescience": {
+        "ticker_prescience": -0.0021380187700580275,
+        "exposure_timing": -0.044616108315996605,
+        "conf_weighted_timing": -0.021321708361389673
+      },
+      "pre_event_timing": {},
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 95,
+          "rebound": 3,
+          "downturn": 1,
+          "rally": 2
+        },
+        "n_hard_decisions": 4
+      },
+      "forensic_excerpts": [
+        {
+          "date": "2026-01-16",
+          "hard_tells": [],
+          "future_months": [
+            "may"
+          ],
+          "text": "The market appears mixed, with SPY and IWM showing slight strength and positive momentum, while others like QQQ and TSLA exhibit weak performance and higher volatility. IWM has the strongest recent returns and lowest volatility, suggesting a more defensive tilt may be appropriate. IWM shows positive momentum and low volatility, while SPY and JPM offer diversification and moderate returns."
+        },
+        {
+          "date": "2026-02-05",
+          "hard_tells": [],
+          "future_months": [
+            "may"
+          ],
+          "text": "The market is showing signs of weakness across all tickers, especially in growth names like COIN and QQQ. The portfolio is currently fully in cash, and the focus is on avoiding further downside. Positioning for lower volatility or defensive sectors may offer better risk-adjusted returns. JPM has shown relative stability with lower drawdowns and a positive 5-day return, making it a safer allocation"
+        },
+        {
+          "date": "2026-03-24",
+          "hard_tells": [],
+          "future_months": [
+            "may"
+          ],
+          "text": "Market conditions appear mixed, with most indices showing recent underperformance, particularly in the tech sector (QQQ and NVDA). TSLA and JPM show slight positive returns over the last day, which may indicate relative strength. COIN is experiencing significant drawdown, making it a high-risk candidate. Positioning will favor lower volatility and more stable returns. JPM and SPY demonstrate bette"
+        },
+        {
+          "date": "2026-04-20",
+          "hard_tells": [],
+          "future_months": [
+            "may"
+          ],
+          "text": "The market shows mixed momentum with strong 5- and 10-day returns for broad indices like SPY and IWM, but recent 1-day underperformance may reflect short-term volatility. COIN and NVDA show high recent volatility, while JPM appears more stable. Positioning will focus on lower-volatility growth and momentum leaders. Balancing momentum in SPY and QQQ with lower-volatility stability in JPM and sector"
+        }
+      ],
+      "n_parse_fail": 0
+    },
+    "T-in": {
+      "model": "qwen3:32b",
+      "financial": {
+        "total_return": 0.16678542008061084,
+        "ann_return": 0.3615528411910975,
+        "ann_vol": 0.3167476181321441,
+        "sharpe": 1.0950707843991163,
+        "max_drawdown": -0.145795101357738,
+        "n_days": 127.0,
+        "turnover": 0.736904761904762
+      },
+      "prescience": {
+        "ticker_prescience": -0.017759650653948286,
+        "exposure_timing": -0.06873168676830486,
+        "conf_weighted_timing": -0.07091529489277801
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.7600000000000001,
+        "us_election_trump_trade": 0.17133333333333345,
+        "event_timing_mean": 0.46566666666666673
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.0036005454275139996,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.03804601101682969,
+        "us_election_trump_trade_port_ret": 0.08165076236436708,
+        "us_election_trump_trade_excess_vs_mkt": -0.021892520539325038
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 115,
+          "correction": 2,
+          "rebound": 5,
+          "downturn": 1,
+          "selloff": 1
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    }
+  },
+  "comparisons": {
+    "T-in_vs_C-A": {
+      "T-in_timing_prescience": {
+        "point": -0.06873168676830484,
+        "lo": -0.18879017072874596,
+        "hi": 0.06410327170349406,
+        "p_gt_0": 0.8526666666666667,
+        "n": 127
+      },
+      "C-A_timing_prescience": {
+        "point": 0.058063969621486834,
+        "lo": -0.060793209208780494,
+        "hi": 0.20305322878892765,
+        "p_gt_0": 0.20366666666666666,
+        "n": 127
+      },
+      "permutation_diff": {
+        "diff": -0.12679565638979168,
+        "p_value": 0.2605478904219156
+      }
+    },
+    "T-in_vs_C-B": {
+      "T-in_timing_prescience": {
+        "point": -0.06873168676830484,
+        "lo": -0.18879017072874596,
+        "hi": 0.06410327170349406,
+        "p_gt_0": 0.8526666666666667,
+        "n": 127
+      },
+      "C-B_timing_prescience": {
+        "point": -0.04461610831599667,
+        "lo": -0.19311817679851903,
+        "hi": 0.10234421777773167,
+        "p_gt_0": 0.711,
+        "n": 101
+      },
+      "permutation_diff": {
+        "diff": -0.02411557845230817,
+        "p_value": 0.862627474505099
+      }
+    }
+  },
+  "foresight_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": -0.015621631883890258,
+    "gap_exposure_timing": -0.02411557845230826,
+    "gap_conf_weighted_timing": -0.04959358653138833
+  },
+  "regime_baseline_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": 0.009507753266262131,
+    "gap_exposure_timing": 0.02506000306673986,
+    "gap_conf_weighted_timing": 0.022023255876148708
+  },
+  "foresight_gap_DiD": {
+    "gap_ticker_prescience": -0.025129385150152388,
+    "gap_exposure_timing": -0.04917558151904812,
+    "gap_conf_weighted_timing": -0.07161684240753705
+  },
+  "DiD_note": "Leakage is supported only if the LLM in-dist\u2212OOD gap EXCEEDS the no-memory momentum baseline's gap (DiD > 0)."
+}

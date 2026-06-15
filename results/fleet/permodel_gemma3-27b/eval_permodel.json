@@ -1,0 +1,30 @@
+{
+  "design": "per-model in-train vs out-of-train (1yr each)",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "models": {
+    "gemma3:27b": {
+      "cutoff": "2024-08",
+      "recall": "Aug-2024 (confab?)",
+      "in_window": "Y2024",
+      "out_window": "Y2025",
+      "sharpe_in": 1.5604965143033558,
+      "sharpe_out": 0.09542567598541607,
+      "return_in": 1.468786273546674,
+      "return_out": -0.004508860575708984,
+      "timing_in": -0.016126437860279882,
+      "timing_out": -0.0642031738643013,
+      "real_in_minus_out": 0.04807673600402142,
+      "regime_baseline_gap": -0.041896323255269576,
+      "DiD": 0.089973059259291,
+      "perm_in_vs_out_p": 0.624875024995001,
+      "perm_diff": 0.04807673600402142,
+      "n_in_days": 251,
+      "n_out_days": 249,
+      "parse_fail": 0
+    }
+  }
+}

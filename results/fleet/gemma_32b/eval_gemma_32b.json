@@ -1,0 +1,181 @@
+{
+  "tag": "gemma_32b",
+  "groups": {
+    "C-A": {
+      "model": "qwen2.5:32b",
+      "financial": {
+        "total_return": 0.2044957960677604,
+        "ann_return": 0.4519001003145682,
+        "ann_vol": 0.35795847473422043,
+        "sharpe": 1.199512077108193,
+        "max_drawdown": -0.18086714610119917,
+        "n_days": 127.0,
+        "turnover": 0.8392857142857143
+      },
+      "prescience": {
+        "ticker_prescience": -0.003582598192770139,
+        "exposure_timing": 0.006404741605388957,
+        "conf_weighted_timing": 0.013513474195621407
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.37666666666666665,
+        "us_election_trump_trade": 0.11666666666666659,
+        "event_timing_mean": 0.2466666666666666
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.012552905829403112,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.029093650614940573,
+        "us_election_trump_trade_port_ret": 0.11184963697826812,
+        "us_election_trump_trade_excess_vs_mkt": 0.008306354074576009
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 94,
+          "rally": 1,
+          "downturn": 3,
+          "rebound": 1
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "C-B": {
+      "model": "gemma3:27b",
+      "financial": {
+        "total_return": 0.021648624532335736,
+        "ann_return": 0.05611271193925985,
+        "ann_vol": 0.16685587950195332,
+        "sharpe": 0.3918494671472854,
+        "max_drawdown": -0.14072242801481347,
+        "n_days": 101.0,
+        "turnover": 0.6829666666666666
+      },
+      "prescience": {
+        "ticker_prescience": -0.012563706546815018,
+        "exposure_timing": -0.04080566778948157,
+        "conf_weighted_timing": -0.04428428807593462
+      },
+      "pre_event_timing": {},
+      "event_day_dodge": {},
+      "rationale_forensics": {
+        "hard_tell_counts": {},
+        "soft_tell_counts": {
+          "volatility": 96,
+          "rally": 12
+        },
+        "n_hard_decisions": 0
+      },
+      "forensic_excerpts": [],
+      "n_parse_fail": 0
+    },
+    "T-in": {
+      "model": "gemma3:27b",
+      "financial": {
+        "total_return": 0.12222514145176973,
+        "ann_return": 0.2703729805563099,
+        "ann_vol": 0.24116672196126285,
+        "sharpe": 0.9850978201640351,
+        "max_drawdown": -0.14485811623868974,
+        "n_days": 127.0,
+        "turnover": 0.7085978835978836
+      },
+      "prescience": {
+        "ticker_prescience": -0.017348259798413004,
+        "exposure_timing": -0.01761468962746744,
+        "conf_weighted_timing": -0.012558828024565746
+      },
+      "pre_event_timing": {
+        "yen_carry_unwind_crash": 0.16500000000000012,
+        "us_election_trump_trade": 0.0675,
+        "event_timing_mean": 0.11625000000000008
+      },
+      "event_day_dodge": {
+        "yen_carry_unwind_crash_port_ret": -0.016574392973642094,
+        "yen_carry_unwind_crash_excess_vs_mkt": 0.025072163470701587,
+        "us_election_trump_trade_port_ret": 0.06544783695709966,
+        "us_election_trump_trade_excess_vs_mkt": -0.03809544594659247
+      },
+      "rationale_forensics": {
+        "hard_tell_counts": {
+          "election": 1
+        },
+        "soft_tell_counts": {
+          "volatility": 119,
+          "rally": 20
+        },
+        "n_hard_decisions": 1
+      },
+      "forensic_excerpts": [
+        {
+          "date": "2024-12-09",
+          "hard_tells": [
+            "election"
+          ],
+          "future_months": [],
+          "text": "The portfolio experienced a loss yesterday despite relatively stable market conditions, indicating potential overexposure or poor stock selection. TSLA and COIN exhibit high volatility and have shown mixed performance recently; NVDA is also showing weakness. IWM and SPY offer more stability with reasonable returns. Shifting to a core allocation of SPY and IWM with some JPM provides better diversif"
+        }
+      ],
+      "n_parse_fail": 0
+    }
+  },
+  "comparisons": {
+    "T-in_vs_C-A": {
+      "T-in_timing_prescience": {
+        "point": -0.01761468962746742,
+        "lo": -0.1081176554315665,
+        "hi": 0.0710575518417286,
+        "p_gt_0": 0.6523333333333333,
+        "n": 127
+      },
+      "C-A_timing_prescience": {
+        "point": 0.0064047416053889675,
+        "lo": -0.12633932812919665,
+        "hi": 0.14693457267528973,
+        "p_gt_0": 0.4683333333333333,
+        "n": 127
+      },
+      "permutation_diff": {
+        "diff": -0.024019431232856388,
+        "p_value": 0.8174365126974605
+      }
+    },
+    "T-in_vs_C-B": {
+      "T-in_timing_prescience": {
+        "point": -0.01761468962746742,
+        "lo": -0.1081176554315665,
+        "hi": 0.0710575518417286,
+        "p_gt_0": 0.6523333333333333,
+        "n": 127
+      },
+      "C-B_timing_prescience": {
+        "point": -0.040805667789481574,
+        "lo": -0.15696127623990633,
+        "hi": 0.07800287939253847,
+        "p_gt_0": 0.7413333333333333,
+        "n": 101
+      },
+      "permutation_diff": {
+        "diff": 0.023190978162014153,
+        "p_value": 0.8060387922415517
+      }
+    }
+  },
+  "foresight_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": -0.004784553251597986,
+    "gap_exposure_timing": 0.02319097816201413,
+    "gap_conf_weighted_timing": 0.03172546005136887
+  },
+  "regime_baseline_gap_Tin_minus_CB": {
+    "gap_ticker_prescience": 0.009507753266262131,
+    "gap_exposure_timing": 0.02506000306673986,
+    "gap_conf_weighted_timing": 0.022023255876148708
+  },
+  "foresight_gap_DiD": {
+    "gap_ticker_prescience": -0.014292306517860117,
+    "gap_exposure_timing": -0.0018690249047257322,
+    "gap_conf_weighted_timing": 0.009702204175220164
+  },
+  "DiD_note": "Leakage is supported only if the LLM in-dist\u2212OOD gap EXCEEDS the no-memory momentum baseline's gap (DiD > 0)."
+}

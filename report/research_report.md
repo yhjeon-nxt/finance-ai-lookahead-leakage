@@ -41,10 +41,13 @@ official Aug-2024 cutoff) did *not* reproduce the clean signature** — it **con
 period (projecting "Joe Biden" as the 2024 winner) rather than recalling it (the pre-registered
 H2). The two-family contrast yields the study's sharpest lesson: **a documented in-window cutoff
 is necessary but not sufficient for leakage — what matters is genuine recall, so each model must
-be probed, not assumed contaminated from its cutoff date.** A four-model, in-train-year vs
-out-of-train-year sweep (§4.10) corroborates this: every model trades its training year at a far
-higher Sharpe than an unseen year, and the **regime-adjusted leakage gap orders by genuine recall**
-(qwen3 > qwen2.5 > gemma-confabulates > llama), though per-model significance is power-limited.
+be probed, not assumed contaminated from its cutoff date.** An **eight-model, two-size-tier**
+in-train-year vs out-of-train-year sweep (§4.10) adds two patterns: every model trades its
+training year at a higher Sharpe than an unseen year, and — within all three families that have
+both tiers — the **larger model shows the *larger* regime-adjusted leakage gap** (qwen3 8B→32B
++0.075→+0.133; qwen2.5, gemma likewise), i.e. a more competent agent trades on its memory more
+effectively. All per-model effects remain individually non-significant (underpowered), so the
+evidence is the *direction* and the *within-family monotonicity*, not per-model p-values.
 
 ---
 
@@ -271,7 +274,7 @@ staged to S3 so the instance does no yfinance I/O; a resumable decision cache (k
 group·model·window·seed·date) makes spot interruption cost ≤ one decision; logs/equity/raw
 outputs stream to `s3://neuroxt-personal/yhjeon/finance-ai-leakage/` every 30–60 s; the
 instance self-terminates on completion. The main qwen3 run cost **< $1**; **total across all
-runs** (main + Gemma co-treatment + the 4-model sweep, §4.9–4.10) **≈ $5.4** (Appendix A).
+runs** (incl. the final 7-instance 32B+8B parallel fleet) **≈ $17** (Appendix A).
 
 ### 3.11 Pivots from the baseline prompt
 
@@ -456,49 +459,50 @@ for parametric leakage — what matters is whether the model *genuinely recalls*
 therefore **model-specific, not a mechanical consequence of the cutoff date** — which makes
 per-model probing (not model-card cutoffs) the operative safeguard.
 
-### 4.10 Per-model: in-train-year vs out-of-train-year (4 models, EC2)
+### 4.10 Per-model in-vs-out across two size tiers (8 models, EC2 fleet)
 
 The cleanest within-model test holds the backbone fixed and varies only the *traded year* between
-one **inside** the model's training cutoff and one **after** it. We ran this for **four models**
-(each with an empirically-grounded cutoff), 3 seeds, on EC2, with a no-memory momentum baseline
-for the regime-adjusted DiD. The OUT window is chosen per model to be genuinely post-cutoff (for
-`qwen3`, a 2025-release model that partly knows 2025, the only clean OOD year is 2026).
+one **inside** the model's training cutoff and one **after** it. We ran it for **eight models —
+four small (≈8–12B) and four large (≈24–32B)** — on the **identical enriched price-only context**
+(§3.6, augmented with multi-horizon momentum, drawdown-from-high, distance-from-MA and a
+vol-regime flag), 3 seeds, on a 7-instance EC2 spot fleet, with a no-memory momentum baseline for
+the regime-adjusted DiD (circular block bootstrap, footnote ¹).
 
-All four models trade ~1 full **calendar year** IN vs a full year OUT (so the Sharpe levels here
-differ from the half-year §4.1/§4.9 figures — these are *different, longer windows*, not a
-restatement):
+| Family | Model | tier | IN/OUT | Sharpe IN | Sharpe OUT | **DiD** | p¹ |
+|---|---|---|---|---|---|---|---|
+| Qwen3 | `qwen3:8b` | 8B | 2024/2026 | +1.69 | −0.23 | +0.075 | 0.26 |
+| Qwen3 | `qwen3:32b` | 32B | 2024/2026 | +1.75 | +0.04 | **+0.133** | **0.13** |
+| Qwen2.5 | `qwen2.5:7b` | 8B | 2023/2025 | +1.71 | +0.72 | +0.004 | 0.48 |
+| Qwen2.5 | `qwen2.5:32b` | 32B | 2023/2025 | +2.30 | +0.68 | +0.065 | 0.23 |
+| Gemma3 | `gemma3:12b` | 12B | 2024/2025 | +1.08 | +0.48 | +0.066 | 0.16 |
+| Gemma3 | `gemma3:27b` | 27B | 2024/2025 | +1.56 | +0.10 | +0.090 | 0.17 |
+| Mistral | `mistral-small3.2` | 24B | 2023/2025 | +2.47 | +0.68 | −0.018 | 0.58 |
+| Llama | `llama3.1:8b` | 8B | 2023/2025 | +1.96 | +0.45 | −0.154 | 0.97 |
 
-| Model | IN-year (recall) | OUT-year | Sharpe IN | Sharpe OUT | **DiD (regime-adj.)** | one-sided p¹ |
-|---|---|---|---|---|---|---|
-| `qwen3:8b` | 2024 — **genuinely recalls** | 2026 | +1.91 | +0.49 | **+0.119** | 0.16 |
-| `qwen2.5:7b` | 2023 — knows | 2025 | +1.79 | +0.50 | +0.082 | 0.15 |
-| `gemma3:12b` | 2024 — **confabulates** | 2025 | +1.03 | +0.34 | +0.040 | 0.30 |
-| `llama3.1:8b` | 2023 — weak | 2025 | +2.67 | +1.17 | +0.002 | 0.48 |
-
-¹ One-sided bootstrap p for H₀: DiD ≤ 0 (no leakage) — i.e. the fraction of a **circular block
-bootstrap** (block=5) of the DiD statistic that falls ≤ 0; **smaller = stronger leakage
-evidence**. Autocorrelation-robust, and testing the regime-adjusted DiD rather than the
-regime-confounded raw in-vs-out gap (see §3.8). All four are non-significant; every DiD CI
-includes 0.
+¹ One-sided block-bootstrap p for H₀: DiD ≤ 0 (no leakage); **smaller = stronger leakage
+evidence** (§3.8). **All are non-significant; every DiD CI includes 0.**
 
 ![Per-model in vs out](figures/per_model_in_vs_out.png)
 
-**Two findings.** (1) **Every model earns a far higher Sharpe in its training year than out of
-it** (right panel) — but much of that is market regime, which is exactly why we regime-adjust.
-(2) After the DiD correction, the residual leakage **orders by genuine recall**: `qwen3` (which
-correctly recalls the Aug-5 crash / NVIDIA split) is largest (+0.119), `qwen2.5` (knows its 2023
-in-year) next (+0.082), `gemma3` (which *confabulates* its 2024 in-year — "Biden won") small
-(+0.040), and `llama3.1` ≈0 (+0.002). This is the hypothesis's signature: *the more a model
-genuinely remembers its in-window, the larger its in−out leakage gap.*
+**Three findings.** (1) **Every model trades its in-train year at a higher Sharpe than its
+out-of-train year** — but much of that is regime, which is why we regime-adjust. (2) **A
+consistent within-family size effect:** in all three families with both tiers, the *larger* model
+has the *larger* in-vs-out DiD — qwen3 8B→32B (+0.075→**+0.133**), qwen2.5 7B→32B
+(+0.004→+0.065), gemma3 12B→27B (+0.066→+0.090). So a more *competent* agent trades on its
+parametric memory **more** effectively, not less — addressing the concern that an 8B trader is
+"too weak" to reveal leakage. (3) `qwen3:32b` shows the **largest DiD overall** (+0.133, p=0.13).
+Counterexamples remain (`llama3.1:8b` and `mistral` are ≈0/negative), and — crucially — **nothing
+is individually significant**; the evidence is the *direction and the within-family monotonicity*,
+not per-model p-values.
 
-**Honesty about power.** No single model's DiD is significant at 3 seeds × ~250 days — the
-block-bootstrap one-sided p (H₀: no leakage) is 0.15 (qwen2.5), 0.16 (qwen3), 0.30 (gemma),
-0.48 (llama), and every DiD CI includes 0. The evidence is in the **cross-model ordering of the
-DiD point estimates** (qwen3 > qwen2.5 > gemma > llama), not per-model significance; the two Qwen
-p-values (0.15 vs 0.16) are statistically indistinguishable and are not read as separating them. We also note the methodological lesson the run surfaced: with
-`qwen3`'s OUT window mis-set to 2025 (which it partly knows), its DiD was −0.07; moving OUT to the
-genuinely-unseen 2026 flipped it to +0.119 — **the OUT window must be verified post-cutoff per
-model**, or leakage is masked.
+**Window-sensitivity caveat (the honest wrinkle).** On the 2024-**H2**-specific headline window
+(§4.1–4.5), with a *same-family* control (`qwen2.5:32b`), `qwen3:32b`'s DiD was **negative**
+(−0.05) — the opposite of its +0.133 on *full-year* 2024. The reconciliation: `qwen3:32b`'s
+*effective* cutoff (~mid-2024) covers 2024-**H1** well but not the Aug-5/Nov-5 **H2** events, so
+its leakage surfaces over full-year 2024 (which includes the known H1) but not the H2 sub-window —
+whereas `qwen3:8b`, which *does* recall the Aug-5 crash, leaks specifically on H2. **Leakage is
+sensitive to whether the model's effective cutoff covers the exact traded sub-window** — a further
+argument for measuring recall per window, not trusting a single cutoff date.
 
 ## 5. Discussion & Forensic Analysis
 

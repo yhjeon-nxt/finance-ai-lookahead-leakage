@@ -1,0 +1,30 @@
+{
+  "design": "per-model in-train vs out-of-train (1yr each)",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "models": {
+    "mistral-small3.2": {
+      "cutoff": "~2023-10",
+      "recall": "~2023 (denies 2024)",
+      "in_window": "Y2023",
+      "out_window": "Y2025",
+      "sharpe_in": 2.4724556122337416,
+      "sharpe_out": 0.6778263608224585,
+      "return_in": 2.3616444060471653,
+      "return_out": 0.32153317729474207,
+      "timing_in": 0.016202641753598347,
+      "timing_out": 0.030550475882817205,
+      "real_in_minus_out": -0.014347834129218858,
+      "regime_baseline_gap": 0.003143653233649582,
+      "DiD": -0.01749148736286844,
+      "perm_in_vs_out_p": 0.8378324335132974,
+      "perm_diff": -0.014347834129218858,
+      "n_in_days": 249,
+      "n_out_days": 249,
+      "parse_fail": 0
+    }
+  }
+}

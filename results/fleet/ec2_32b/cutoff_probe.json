@@ -1,0 +1,72 @@
+{
+  "models": {
+    "qwen2.5:32b": {
+      "documented_cutoff": "2023-12",
+      "label": "control",
+      "answers": [
+        {
+          "id": "wc2022",
+          "era": "pre-2023 (both should know)",
+          "question": "Who won the 2022 FIFA World Cup? Answer in one sentence.",
+          "expected_contains": "Argentina",
+          "answer": "[error: ResponseError: timed out waiting for llama-server to start -  (status code: 500)]"
+        },
+        {
+          "id": "election2024",
+          "era": "2024-H2 (target window)",
+          "question": "Who won the United States presidential election held in November 2024? One sentence.",
+          "expected_contains": "Trump",
+          "answer": "[error: ResponseError: timed out waiting for llama-server to start -  (status code: 500)]"
+        },
+        {
+          "id": "aug2024crash",
+          "era": "2024-H2 (target window)",
+          "question": "On August 5, 2024 there was a sharp global stock-market selloff. What was the main cause? One sentence.",
+          "expected_contains": "yen carry trade unwind / Bank of Japan rate hike",
+          "answer": "[error: ResponseError: timed out waiting for llama-server to start -  (status code: 500)]"
+        },
+        {
+          "id": " q1_2026",
+          "era": "2026 (OOD window \u2014 neither should know specifics)",
+          "question": "Describe one specific notable US stock-market event from the first quarter of 2026. One sentence. If you are not sure, say so.",
+          "expected_contains": "should express uncertainty",
+          "answer": "[error: ResponseError: timed out waiting for llama-server to start -  (status code: 500)]"
+        }
+      ]
+    },
+    "qwen3:32b": {
+      "documented_cutoff": "2024+ (forced auto)",
+      "label": "treatment",
+      "answers": [
+        {
+          "id": "wc2022",
+          "era": "pre-2023 (both should know)",
+          "question": "Who won the 2022 FIFA World Cup? Answer in one sentence.",
+          "expected_contains": "Argentina",
+          "answer": "Argentina won the 2022 FIFA World Cup."
+        },
+        {
+          "id": "election2024",
+          "era": "2024-H2 (target window)",
+          "question": "Who won the United States presidential election held in November 2024? One sentence.",
+          "expected_contains": "Trump",
+          "answer": "As of now, the outcome of the United States presidential election held in November 2024 has not been determined, as the election has not yet taken place."
+        },
+        {
+          "id": "aug2024crash",
+          "era": "2024-H2 (target window)",
+          "question": "On August 5, 2024 there was a sharp global stock-market selloff. What was the main cause? One sentence.",
+          "expected_contains": "yen carry trade unwind / Bank of Japan rate hike",
+          "answer": "The main cause of the sharp global stock-market selloff on August 5, 2024, was a combination of rising U.S. Treasury yields and concerns over tighter monetary policy, which triggered fears of slower economic growth and reduced corporate profits."
+        },
+        {
+          "id": " q1_2026",
+          "era": "2026 (OOD window \u2014 neither should know specifics)",
+          "question": "Describe one specific notable US stock-market event from the first quarter of 2026. One sentence. If you are not sure, say so.",
+          "expected_contains": "should express uncertainty",
+          "answer": "In the first quarter of 2026, the U.S. stock market experienced a sharp selloff following the Federal Reserve's unexpected rate hike amid signs of persistent inflation, leading to a 10% single-week drop in the S&P 500."
+        }
+      ]
+    }
+  }
+}

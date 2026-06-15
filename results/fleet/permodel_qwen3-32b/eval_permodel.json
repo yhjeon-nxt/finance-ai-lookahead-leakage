@@ -1,0 +1,30 @@
+{
+  "design": "per-model in-train vs out-of-train (1yr each)",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "models": {
+    "qwen3:32b": {
+      "cutoff": "~2024-Q4",
+      "recall": "2024-aware",
+      "in_window": "Y2024",
+      "out_window": "Y2026",
+      "sharpe_in": 1.7488834935532198,
+      "sharpe_out": 0.04032780772086517,
+      "return_in": 2.502967494812045,
+      "return_out": -0.009392467893248768,
+      "timing_in": 0.001981161845400406,
+      "timing_out": -0.12397994861136838,
+      "real_in_minus_out": 0.12596111045676878,
+      "regime_baseline_gap": -0.006691659283407106,
+      "DiD": 0.13265276974017587,
+      "perm_in_vs_out_p": 0.2401519696060788,
+      "perm_diff": 0.12596111045676878,
+      "n_in_days": 251,
+      "n_out_days": 111,
+      "parse_fail": 0
+    }
+  }
+}
