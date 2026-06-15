@@ -1,0 +1,7 @@
+ec2_32b i-0146f1373cb47d634
+gemma_32b i-07a6a1e4545754c5b
+permodel_small i-062643d00d966705b
+permodel_qwen3-32b i-0ac8736c778ba85d4
+permodel_qwen25-32b i-0a328a24a717f2a86
+permodel_gemma3-27b i-0b84cb8d7c450851a
+permodel_mistral i-043cc94cf51748a18
