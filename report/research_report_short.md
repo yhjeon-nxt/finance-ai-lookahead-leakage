@@ -22,7 +22,7 @@ a window it cannot have seen?*
 
 ### 2. Design
 
-Three arms run an **identical Reflection + ReAct agent** on a **price-only causal context** (no
+Three arms run an **identical Reflection + ReAct (reason-then-act) agent** on a **price-only causal context** (no
 news; a hard causality assertion) so any foresight must be *parametric*. Knowledge cutoffs are
 **measured by probe, not trusted from model cards**. The three arms (labels used throughout):
 
@@ -34,12 +34,19 @@ news; a hard causality assertion) so any foresight must be *parametric*. Knowled
 - **C-B** — *time control*: the **same** treatment model on **2026**, i.e. **out-of-distribution
   (OOD)** — strictly after its knowledge cutoff.
 
-To strip out the 2024-vs-2026 **market-regime confound** we report a **difference-in-differences
-(DiD)** against an identical **no-memory momentum baseline**. Inference uses 3 seeds, a circular
-block bootstrap, permutation tests, and a **pseudo-event null** (98 random dates) for the
-crash-timing score.
+To strip out the 2024-vs-2026 **market-regime confound** (the two windows differ in market
+dynamics, not only in what the model has seen) we report a **difference-in-differences (DiD)**
+against an identical **no-memory momentum baseline**: leakage is supported only if the treatment's
+in-vs-out gap *exceeds* the memoryless baseline's. Inference uses 3 seeds, a circular block
+bootstrap, permutation tests, and a **pseudo-event null** (98 random dates) for the crash-timing
+score.
 
 ### 3. Results
+
+*Leakage metrics:* **next-day prescience** = corr(today's allocation, next-day return), ≈ 0 without
+foresight; **exposure timing** = whether the agent **de-risks before a known crash** (or loads
+before a rally) relative to its own average exposure — the **Aug-5 de-risk** is the crash case, and
+its **DiD** is the regime-adjusted version of the same signal.
 
 | metric | **T-in** `qwen3:8b` (recalls) | **C-A** `llama3.1:8b` (control) | **C-B** `qwen3:8b` (OOD) |
 |---|---|---|---|
@@ -51,8 +58,8 @@ crash-timing score.
 crash it demonstrably remembers** (+0.115; top ~5% of random-timing outcomes, *p*=0.051), while
 the control did the **opposite** (−0.125, *p*=0.92). It shows **no election-timing edge** — exactly
 the event the probe shows it does *not* surface — yet its book still **significantly overweights
-the election winner JPM** (Δ+0.088, *p*=0.001): leakage that is behavioural even where verbal
-recall is suppressed. Behaviour mirrors *measured* memory item-by-item, which a generic "smarter
+JPM (JPMorgan)**, a bank that rallied on the election outcome (Δ = treatment−control weight =
++0.088, *p*=0.001): leakage that is behavioural even where verbal recall is suppressed. Behaviour mirrors *measured* memory item-by-item, which a generic "smarter
 model" or a regime artifact would not produce.
 
 **Regime is netted out, not the explanation.** The regime-adjusted **DiD is positive on every
