@@ -52,8 +52,8 @@ docs/         design spec
 
 Develop + smoke-test locally; burst to **single `g6e.xlarge` spot** instances (L40S 48GB,
 ap-northeast-2) for the real runs, each with an idempotent resumable cache and a self-terminate
-backstop. Artifacts stream to `s3://neuroxt-personal/yhjeon/`. Cost: main run **< $1**; **≈$5.4**
-total across all 5 runs (main + Gemma co-treatment + 4-model per-model sweep).
+backstop. Artifacts stream to `s3://neuroxt-personal/yhjeon/`. Cost: main run **< $1**; **≈$17**
+total across all runs (main + Gemma co-treatment + 8-model two-tier per-model sweep on a 7-instance fleet).
 
 ## Reproduce
 

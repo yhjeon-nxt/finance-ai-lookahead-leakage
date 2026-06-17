@@ -140,12 +140,12 @@ estimable foresight gap with an explicit no-memory counterfactual.
 
 ### 3.2 Experimental groups
 
-| Group | Model | Window | Can know the window? | Role |
-|---|---|---|---|---|
-| **T-in** | `qwen3:8b` (Qwen, 2024-aware) | 2024-07-01…12-31 | **yes (recalls)** | leakage candidate (family 1) |
-| **T2-in** | `gemma3:12b` (Google, Aug-2024 cutoff) | 2024-07-01…12-31 | **nominally** (confabulates) | independent-family co-treatment (§4.9) |
-| **C-A** | `llama3.1:8b` (cutoff 2023-12) | 2024-07-01…12-31 | no | model control |
-| **C-B / C-B2** | treatment (qwen3 / gemma3) | 2026-01-01…05-31 | no (post-cutoff) | time control |
+| Group                | Model                                    | Window            | Can know the window?               | Role                                    |
+| -------------------- | ---------------------------------------- | ----------------- | ---------------------------------- | --------------------------------------- |
+| **T-in**       | `qwen3:8b` (Qwen, 2024-aware)          | 2024-07-01…12-31 | **yes (recalls)**            | leakage candidate (family 1)            |
+| **T2-in**      | `gemma3:12b` (Google, Aug-2024 cutoff) | 2024-07-01…12-31 | **nominally** (confabulates) | independent-family co-treatment (§4.9) |
+| **C-A**        | `llama3.1:8b` (cutoff 2023-12)         | 2024-07-01…12-31 | no                                 | model control                           |
+| **C-B / C-B2** | treatment (qwen3 / gemma3)               | 2026-01-01…05-31 | no (post-cutoff)                   | time control                            |
 
 The **T-in vs C-B** contrast holds the model fixed and varies only whether the traded window is
 in-distribution; it isolates leakage from raw capability. **C-A** corroborates with an
@@ -179,12 +179,12 @@ It denies **all** four 2024-H2 facts — it genuinely cannot leak what it never 
 We probed four candidate open models on four 2024-H2 discriminators (Nov-2024 election winner,
 Harris's VP pick, NVIDIA's June-2024 10-for-1 split, the Aug-5 yen-carry selloff):
 
-| Model | 2024-H2 recall | Notes |
-|---|---|---|
-| **qwen3:8b** | **2/4** | correctly recalls the **NVIDIA split** and the **Aug-5 selloff** (the market-relevant facts); *refuses* the political ones via RLHF guardrails; misreports its own cutoff as "October 2023" |
-| qwen2.5:7b | 1/4 | mostly denies (keyword match on NVIDIA is a borderline false positive) |
-| llama3.1:8b | 0/4 | clean control — denies all |
-| phi4 | 0/4 | denies all; self-reports "October 2023" despite a Dec-2024 release |
+| Model              | 2024-H2 recall | Notes                                                                                                                                                                                                    |
+| ------------------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **qwen3:8b** | **2/4**  | correctly recalls the**NVIDIA split** and the **Aug-5 selloff** (the market-relevant facts); *refuses* the political ones via RLHF guardrails; misreports its own cutoff as "October 2023" |
+| qwen2.5:7b         | 1/4            | mostly denies (keyword match on NVIDIA is a borderline false positive)                                                                                                                                   |
+| llama3.1:8b        | 0/4            | clean control — denies all                                                                                                                                                                              |
+| phi4               | 0/4            | denies all; self-reports "October 2023" despite a Dec-2024 release                                                                                                                                       |
 
 The treatment is selected (by a gated rule: highest 2024-H2 score among candidates that also
 deny 2026 and pass a sanity check; fails loudly otherwise). On the EC2 run we extended the probe
@@ -226,7 +226,7 @@ a one-line reflection on the prior day's P&L, and emits a single JSON object:
 1−Σweights. The free-text `analysis`/`rationale` are preserved verbatim as the qualitative
 smoking-gun channel. The identical prompt/scaffold is used for every group; only the model and
 the date window change. *Inference note:* reasoning models (qwen3) must run with thinking
-disabled, else `format=json` yields empty output — itself a reproducibility hazard (§6).
+disabled, else `format=json` yields empty output — itself a reproducibility hazard (Appendix B).
 
 ### 3.6 Price-only causal context (leakage isolation)
 
@@ -321,11 +321,12 @@ on unseen dates (orange) both stay roughly flat. (An ordinal-axis overlay of all
 the only like-for-like pair is T-in vs C-A.)*
 
 ### 4.1 Financial performance
-| Group | Model | Total return | Sharpe | Max DD | Turnover | Parse-fail |
-|---|---|---|---|---|---|---|
-| **T-in** (knows 2024-H2) | `qwen3:8b` | **+0.251** | **+1.76** | −0.136 | 0.728 | 0 |
-| C-A (model control) | `llama3.1:8b` | +0.043 | +0.30 | −0.152 | 0.880 | 0 |
-| C-B (time control, same model, OOD) | `qwen3:8b` | +0.032 | +0.49 | −0.131 | 0.694 | 0 |
+
+| Group                               | Model           | Total return     | Sharpe          | Max DD  | Turnover | Parse-fail |
+| ----------------------------------- | --------------- | ---------------- | --------------- | ------- | -------- | ---------- |
+| **T-in** (knows 2024-H2)      | `qwen3:8b`    | **+0.251** | **+1.76** | −0.136 | 0.728    | 0          |
+| C-A (model control)                 | `llama3.1:8b` | +0.043           | +0.30           | −0.152 | 0.880    | 0          |
+| C-B (time control, same model, OOD) | `qwen3:8b`    | +0.032           | +0.49           | −0.131 | 0.694    | 0          |
 
 The treatment earns a Sharpe of **1.76** on the window it was trained on, versus **0.30**
 (different model, same window) and **0.49** (same model, unseen window). The advantage appears
@@ -339,19 +340,21 @@ costs**; since all arms share the same daily-rebalance cost structure and compar
 even though absolute returns are not net.
 
 ### 4.2 Leakage / foresight metrics
-| Group | Ticker prescience | Exposure timing | Conf-wtd timing |
-|---|---|---|---|
-| **T-in** | **+0.021** | **+0.054** | **+0.055** |
-| C-A | −0.032 | −0.071 | −0.037 |
-| C-B | +0.016 | −0.039 | −0.045 |
+
+| Group          | Ticker prescience | Exposure timing  | Conf-wtd timing  |
+| -------------- | ----------------- | ---------------- | ---------------- |
+| **T-in** | **+0.021**  | **+0.054** | **+0.055** |
+| C-A            | −0.032           | −0.071          | −0.037          |
+| C-B            | +0.016            | −0.039          | −0.045          |
 
 Only T-in shows *positive* prescience/timing; both controls are ≈0 or negative.
 
 ### 4.3 Pre-event timing (the behavioural smoking gun)
-| Group | Aug-5 crash (de-risk > 0) | Nov-5 election (load > 0) |
-|---|---|---|
-| **T-in** | **+0.115** (de-risked into the crash) | +0.011 (≈none) |
-| C-A | −0.125 (did *not* de-risk) | +0.060 |
+
+| Group          | Aug-5 crash (de-risk > 0)                   | Nov-5 election (load > 0) |
+| -------------- | ------------------------------------------- | ------------------------- |
+| **T-in** | **+0.115** (de-risked into the crash) | +0.011 (≈none)           |
+| C-A            | −0.125 (did*not* de-risk)                | +0.060                    |
 
 The treatment **cut risk before the 2024-08-05 crash** — an event the probe shows it *knows* —
 while the control did not. (The agent is **long-only**, so anticipation can only show up as
@@ -361,21 +364,23 @@ probe*, where qwen3:8b recalled the crash but refused/did not surface the electi
 tracks exactly what the model demonstrably remembers.
 
 ### 4.4 Headline statistical tests (seed-averaged per-day series)
-| Comparison | Δ timing prescience | permutation p |
-|---|---|---|
-| T-in vs C-A | +0.125 | 0.075 |
-| T-in vs C-B | +0.093 | 0.400 |
+
+| Comparison  | Δ timing prescience | permutation p |
+| ----------- | -------------------- | ------------- |
+| T-in vs C-A | +0.125               | 0.075         |
+| T-in vs C-B | +0.093               | 0.400         |
 
 The cross-model contrast is marginal (p≈0.075); the within-model contrast is directionally
 consistent but not significant at this sample size (~100–128 days × 3 seeds) — an
 **underpowering** limitation, not evidence of absence.
 
 ### 4.5 Within-model foresight gap + regime-adjusted difference-in-differences
-| Metric | LLM gap (T-in−C-B) | No-memory baseline gap (MockClient momentum, same windows/seeds) | **DiD (leakage)** |
-|---|---|---|---|
-| ticker prescience | +0.005 | −0.021 | **+0.026** |
-| exposure timing | +0.093 | −0.042 | **+0.136** |
-| conf-wtd timing | +0.100 | −0.045 | **+0.145** |
+
+| Metric            | LLM gap (T-in−C-B) | No-memory baseline gap (MockClient momentum, same windows/seeds) | **DiD (leakage)** |
+| ----------------- | ------------------- | ---------------------------------------------------------------- | ----------------------- |
+| ticker prescience | +0.005              | −0.021                                                          | **+0.026**        |
+| exposure timing   | +0.093              | −0.042                                                          | **+0.136**        |
+| conf-wtd timing   | +0.100              | −0.045                                                          | **+0.145**        |
 
 Critically, the **no-memory momentum baseline's** in-dist−OOD gap is *negative*, so the regime
 difference between 2024-H2 and 2026 works *against* the finding; the **DiD is positive on every
@@ -393,20 +398,22 @@ baseline). The gap between them is the leakage **DiD = +0.136** — positive on 
 correlational: the foresight is what's left after netting out the 2024-H2-vs-2026 regime shift.*
 
 ### 4.6 Rationale forensics
+
 The automated scan found **0** future-event "confessions" in the trading rationales (all groups).
 The leakage here is **behavioural, not verbalised**: the model acts on memorised structure
 (cutting risk before the crash) without naming the event in its reasoning. (Contrast the *probe*,
 §3.3/§5.3, where direct questioning does elicit both recall and confabulation.)
 
 ### 4.7 Pseudo-event null for the Aug-5 de-risk (calibrated significance)
+
 A pre-event timing score is only meaningful against a null. We compare the treatment's observed
 Aug-5 de-risk to the distribution of de-risk scores at **random pseudo-event dates** within the
 window (same metric, 98 valid pseudo-events):
 
-| Group | Observed Aug-5 de-risk | Null mean ± σ | Empirical p (one-sided) |
-|---|---|---|---|
-| **T-in** (knows the crash) | **+0.115** | +0.001 ± 0.065 | **0.051** |
-| C-A (control) | −0.125 (*increased* risk) | +0.002 ± 0.109 | 0.92 |
+| Group                            | Observed Aug-5 de-risk       | Null mean ± σ | Empirical p (one-sided) |
+| -------------------------------- | ---------------------------- | --------------- | ----------------------- |
+| **T-in** (knows the crash) | **+0.115**             | +0.001 ± 0.065 | **0.051**         |
+| C-A (control)                    | −0.125 (*increased* risk) | +0.002 ± 0.109 | 0.92                    |
 
 The treatment's de-risking into the crash is in the **top ~5%** of random-timing outcomes; the
 control did the **opposite** — it carried *more* risk than usual into the crash (p=0.92, i.e. far
@@ -422,6 +429,7 @@ control's observed value (−0.125) sits on the **opposite** tail (p=0.92) — i
 than usual into the crash. The behaviour is both present and calibrated-significant.*
 
 ### 4.8 Per-ticker and allocation views
+
 Beyond portfolio-level metrics, the *composition* of the treatment's book is revealing. Around
 the Nov-5 2024 election (±7 days), we test the treatment-minus-control weight difference per
 ticker with a permutation test (20k perms over seed×day units):
@@ -463,15 +471,15 @@ split.
 
 **Cross-family comparison (treatment, in-distribution):**
 
-| Metric | `qwen3:8b` (recalls 2024-H2) | `gemma3:12b` (confabulates) |
-|---|---|---|
-| In-dist Sharpe | **1.76** | 0.75 |
-| In-dist total return | +0.251 | +0.041 |
-| OOD (C-B) Sharpe | +0.49 | −0.63 |
-| Exposure-timing prescience | +0.054 | +0.025 |
-| T-in vs C-A permutation p | 0.075 | **0.221 (n.s.)** |
-| Regime-adjusted DiD (exposure timing) | +0.136 | +0.092 |
-| Aug-5 crash de-risk (pseudo-event p) | +0.115 (p=0.051) | +0.004 (**p=0.54**) |
+| Metric                                | `qwen3:8b` (recalls 2024-H2) | `gemma3:12b` (confabulates) |
+| ------------------------------------- | ------------------------------ | ----------------------------- |
+| In-dist Sharpe                        | **1.76**                 | 0.75                          |
+| In-dist total return                  | +0.251                         | +0.041                        |
+| OOD (C-B) Sharpe                      | +0.49                          | −0.63                        |
+| Exposure-timing prescience            | +0.054                         | +0.025                        |
+| T-in vs C-A permutation p             | 0.075                          | **0.221 (n.s.)**        |
+| Regime-adjusted DiD (exposure timing) | +0.136                         | +0.092                        |
+| Aug-5 crash de-risk (pseudo-event p)  | +0.115 (p=0.051)               | +0.004 (**p=0.54**)     |
 
 ![Cross-family comparison](figures/cross_family_comparison.png)
 
@@ -497,16 +505,16 @@ four small (≈8–12B) and four large (≈24–32B)** — on the **identical en
 vol-regime flag), 3 seeds, on a 7-instance EC2 spot fleet, with a no-memory momentum baseline for
 the regime-adjusted DiD (circular block bootstrap, footnote ¹).
 
-| Family | Model | tier | IN/OUT | Sharpe IN | Sharpe OUT | **DiD** | p¹ |
-|---|---|---|---|---|---|---|---|
-| Qwen3 | `qwen3:8b` | 8B | 2024/2026 | +1.69 | −0.23 | +0.075 | 0.26 |
-| Qwen3 | `qwen3:32b` | 32B | 2024/2026 | +1.75 | +0.04 | **+0.133** | **0.13** |
-| Qwen2.5 | `qwen2.5:7b` | 8B | 2023/2025 | +1.71 | +0.72 | +0.004 | 0.48 |
-| Qwen2.5 | `qwen2.5:32b` | 32B | 2023/2025 | +2.30 | +0.68 | +0.065 | 0.23 |
-| Gemma3 | `gemma3:12b` | 12B | 2024/2025 | +1.08 | +0.48 | +0.066 | 0.16 |
-| Gemma3 | `gemma3:27b` | 27B | 2024/2025 | +1.56 | +0.10 | +0.090 | 0.17 |
-| Mistral | `mistral-small3.2` | 24B | 2023/2025 | +2.47 | +0.68 | −0.018 | 0.58 |
-| Llama | `llama3.1:8b` | 8B | 2023/2025 | +1.96 | +0.45 | −0.154 | 0.97 |
+| Family  | Model                | tier | IN/OUT    | Sharpe IN | Sharpe OUT | **DiD**    | p¹            |
+| ------- | -------------------- | ---- | --------- | --------- | ---------- | ---------------- | -------------- |
+| Qwen3   | `qwen3:8b`         | 8B   | 2024/2026 | +1.69     | −0.23     | +0.075           | 0.26           |
+| Qwen3   | `qwen3:32b`        | 32B  | 2024/2026 | +1.75     | +0.04      | **+0.133** | **0.13** |
+| Qwen2.5 | `qwen2.5:7b`       | 8B   | 2023/2025 | +1.71     | +0.72      | +0.004           | 0.48           |
+| Qwen2.5 | `qwen2.5:32b`      | 32B  | 2023/2025 | +2.30     | +0.68      | +0.065           | 0.23           |
+| Gemma3  | `gemma3:12b`       | 12B  | 2024/2025 | +1.08     | +0.48      | +0.066           | 0.16           |
+| Gemma3  | `gemma3:27b`       | 27B  | 2024/2025 | +1.56     | +0.10      | +0.090           | 0.17           |
+| Mistral | `mistral-small3.2` | 24B  | 2023/2025 | +2.47     | +0.68      | −0.018          | 0.58           |
+| Llama   | `llama3.1:8b`      | 8B   | 2023/2025 | +1.96     | +0.45      | −0.154          | 0.97           |
 
 ¹ One-sided block-bootstrap p for H₀: DiD ≤ 0 (no leakage); **smaller = stronger leakage
 evidence** (§3.8). **All are non-significant; every DiD CI includes 0.**
@@ -536,13 +544,16 @@ argument for measuring recall per window, not trusting a single cutoff date.
 ## 5. Discussion & Forensic Analysis
 
 ### 5.1 The cutoff probe is itself forensic evidence
+
 Before a single trade, the probes establish the experiment's validity and reveal the *texture*
 of leakage: the control is verifiably blind to 2024-H2, while the treatment demonstrably recalls
 the market events the backtest hinges on. This direct, quotable evidence is stronger than
 relying on vendor-stated cutoffs.
 
 ### 5.2 Backtest forensics — verdict: moderate, consistent support for H1
+
 The evidence triangulates:
+
 1. **Financial.** The treatment's edge (Sharpe 1.76) materialises *only* in-distribution — not
    for a different model on the same window, nor for the same model on an unseen window.
 2. **The knowledge↔behaviour match is the strongest signal.** The treatment cut risk before the
@@ -565,6 +576,7 @@ The evidence triangulates:
    regimes) as the natural power-increasing follow-up.
 
 ### 5.3 Confabulation can be worse than memorisation
+
 A striking qualitative finding: probed about Q1-2026 (beyond any model's cutoff), qwen3:8b did
 not say "I don't know" — it **invented** a specific, confident, false event ("a sharp decline
 following the Federal Reserve's unexpected 50bps hike in early March 2026"). For a trading
@@ -572,22 +584,24 @@ agent, confident confabulation of the future is at least as dangerous as accurat
 the former produces unfalsifiable, plausible-sounding rationales that can drive real positions.
 
 ### 5.4 Threats to validity (and how they were addressed)
-| Threat | Mitigation in this study |
-|---|---|
-| **Pipeline leakage** (future data in the agent's feed) | Price-only causal context + hard causality assertion; the only foresight channel is parametric memory. |
-| **Regime confound** (2024 vs 2026 differ in dynamics) | Difference-in-differences vs a no-memory momentum baseline; the baseline's own gap is *negative*. |
-| **Model-family/capability confound** (treatment vs control) | Within-model in-dist vs OOD contrast (same backbone); independent-family co-treatment (§4.9); 4-model in-vs-out sweep (§4.10). |
-| **Treatment-selection circularity** | Selecting a model that *knows* the period then testing whether it *trades on* it is sound (independently affirmed by the adversarial review). |
-| **Lucky seed / cherry-picking** | ≥3 seeds; inter-seed band on the exposure figure; pseudo-event null. |
-| **Spurious pre-event timing** | Calibrated empirical p-value via 98 random pseudo-events (§4.7). |
-| **Self-reported cutoffs unreliable** | Empirical cutoff + price-recall probes, not model cards. |
-| **Implementation bugs** | 7-dimension adversarial multi-agent review; 18 confirmed issues fixed pre-run (§3.9, `verification_findings.md`). |
-| **Parse-failure contamination** | Parse-fail days carried forward for equity but excluded from foresight metrics; `n_parse_fail = 0` on the final run. |
+
+| Threat                                                            | Mitigation in this study                                                                                                                         |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Pipeline leakage** (future data in the agent's feed)      | Price-only causal context + hard causality assertion; the only foresight channel is parametric memory.                                           |
+| **Regime confound** (2024 vs 2026 differ in dynamics)       | Difference-in-differences vs a no-memory momentum baseline; the baseline's own gap is*negative*.                                               |
+| **Model-family/capability confound** (treatment vs control) | Within-model in-dist vs OOD contrast (same backbone); independent-family co-treatment (§4.9); 8-model in-vs-out sweep (§4.10).                 |
+| **Treatment-selection circularity**                         | Selecting a model that*knows* the period then testing whether it *trades on* it is sound (independently affirmed by the adversarial review). |
+| **Lucky seed / cherry-picking**                             | ≥3 seeds; inter-seed band on the exposure figure; pseudo-event null.                                                                            |
+| **Spurious pre-event timing**                               | Calibrated empirical p-value via 98 random pseudo-events (§4.7).                                                                                |
+| **Self-reported cutoffs unreliable**                        | Empirical cutoff + price-recall probes, not model cards.                                                                                         |
+| **Implementation bugs**                                     | 7-dimension adversarial multi-agent review; 18 confirmed issues fixed pre-run (§3.9,`verification_findings.md`).                              |
+| **Parse-failure contamination**                             | Parse-fail days carried forward for equity but excluded from foresight metrics;`n_parse_fail = 0` on the final run.                            |
 
 ### 5.5 Limitations
+
 - **Statistical power.** ~100–250 trading days per cell; the cross-model contrast is marginal
   (p≈0.075) and the single-pair within-model contrast is non-significant (p≈0.40). We report
-  *moderate* support; the 4-model in-vs-out sweep (§4.10) is the power/robustness remedy.
+  *moderate* support; the 8-model in-vs-out sweep (§4.10) is the power/robustness remedy.
 - **Family dependence (tested).** We ran an independent-family co-treatment (`gemma3:12b`,
   official Aug-2024 cutoff, §4.9). It did **not** reproduce the clean signature — it *confabulates*
   the period rather than recalling it (pre-registered H2). So the leakage is **demonstrated on
@@ -623,12 +637,14 @@ documented cutoff predicts neither. This makes per-model probing non-negotiable.
 ---
 
 ### Appendix A — Reproducibility
+
 All code, prompts, the causality guard, the cutoff/selection/price-recall probes, metrics,
 statistics, and the EC2 infra (spot launch, bootstrap, self-terminate) are in the repository.
 Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally via
 `python -m leakage.run.main`.
 
 **Load-bearing settings (fix these to reproduce):**
+
 - **Models:** treatments `qwen3:8b` **and `gemma3:12b`** (independent-family co-treatment, §4.9),
   control `llama3.1:8b` (ollama 0.30.8); Qwen treatment auto-selected by the gated probe among
   `{qwen3:32b, qwen3:8b}`; Gemma run via `LEAKAGE_FORCE_TREATMENT=gemma3:12b` (artifacts in
@@ -642,10 +658,17 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
   OUT after). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
 - **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
   + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
-  `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $5.4 across 5 EC2 spot runs (qwen3 main ≈ $0.8 incl. 3 aborted boots
-  that each self-terminated cleanly; Gemma co-treatment ≈ $0.6; per-model 4×in/out sweeps ≈ $4).
+    `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $17 across all EC2 spot runs (qwen3 main ≈ $0.8 incl. 3 aborted boots
+    that each self-terminated cleanly; Gemma co-treatment ≈ $0.6; the 8-model two-tier size sweep on a 7-instance spot fleet (§4.10) ≈ $15.5).
 - **Stats:** seed-averaged per-day prescience contributions; circular block bootstrap + permutation
   tests; pseudo-event null with 98 random pseudo-events.
+
+### Appendix B — The inference-config hazard
+
+qwen3 is a hybrid reasoning model; under `format=json` with thinking enabled it emits empty
+content (the token budget is consumed by suppressed `<think>` tokens). The fix (`think=False`)
+changed the parse-success rate from 0% to 100%. We flag this as a concrete, easily-missed
+reproducibility hazard for LLM-agent backtests.
 
 ### Appendix C — Agent prompt & reflection (verbatim)
 
@@ -674,9 +697,3 @@ The per-day **user** message is the rendered causal context (§3.6) — trailing
 (`"Portfolio gained/lost X% in the most recent session (you were Y% invested)."`). The reflection
 carries no look-ahead (it reports an already-realised outcome). Reasoning models (qwen3) are run
 with `think=False` (Appendix B).
-
-### Appendix B — The inference-config hazard
-qwen3 is a hybrid reasoning model; under `format=json` with thinking enabled it emits empty
-content (the token budget is consumed by suppressed `<think>` tokens). The fix (`think=False`)
-changed the parse-success rate from 0% to 100%. We flag this as a concrete, easily-missed
-reproducibility hazard for LLM-agent backtests.
