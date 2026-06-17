@@ -15,7 +15,7 @@ html { font-size: 9.4pt; }
 body {
   font-family: "Charter", "Georgia", "DejaVu Sans",
                "Apple SD Gothic Neo", "Noto Sans CJK KR", serif;
-  line-height: 1.31;
+  line-height: 1.27;
   color: #1b1b1b;
   text-align: justify;
   hyphens: auto;
@@ -30,15 +30,17 @@ h1 { font-size: 1.42em; line-height: 1.14; margin: 0 0 .15em;
      border-bottom: 1.5px solid #2f2f2f; padding-bottom: .12em; }
 h3 { font-size: 1em; margin: .55em 0 .12em; page-break-after: avoid; }
 
-p { margin: .3em 0; }
-p:first-of-type { margin-top: .25em; }   /* abstract italic */
+p { margin: .24em 0; }
+p:first-of-type { margin-top: .2em; }   /* abstract italic */
+ul { margin: .2em 0; padding-left: 1.3em; }
+li { margin: .08em 0; }
 
 a { color: #1a5fb4; text-decoration: none; word-break: break-word; }
 
 code { font-family: "SF Mono", "Menlo", "Consolas", "DejaVu Sans", monospace;
        font-size: .85em; background: #f3f4f6; padding: .02em .25em; border-radius: 3px; }
 
-img { max-width: 86%; height: auto; display: block; margin: .35em auto; page-break-inside: avoid; }
+img { max-width: 74%; height: auto; display: block; margin: .3em auto; page-break-inside: avoid; }
 
 table { border-collapse: collapse; width: 100%; margin: .45em 0; font-size: .82em;
         page-break-inside: avoid; }

@@ -24,12 +24,20 @@ a window it cannot have seen?*
 
 Three arms run an **identical Reflection + ReAct agent** on a **price-only causal context** (no
 news; a hard causality assertion) so any foresight must be *parametric*. Knowledge cutoffs are
-**measured by probe, not trusted from model cards**: the treatment `qwen3:8b` genuinely recalls
-the 2024-08-05 yen-carry crash and the NVDA split; the model-control `llama3.1:8b` (cutoff 2023-12)
-denies every 2024-H2 fact; the time-control is the treatment on 2026. To strip out the
-2024-vs-2026 **market-regime confound** we report a **difference-in-differences (DiD)** against an
-identical **no-memory momentum baseline**. Inference uses 3 seeds, a circular block bootstrap,
-permutation tests, and a **pseudo-event null** (98 random dates) for the crash-timing score.
+**measured by probe, not trusted from model cards**. The three arms (labels used throughout):
+
+- **T-in** — *treatment, in-distribution*: `qwen3:8b` trading **2024-H2** (Jul–Dec), which it
+  genuinely recalls — including **Aug-5** (the 2024-08-05 yen-carry-unwind crash, a sharp global
+  selloff) and the June-2024 NVDA stock split.
+- **C-A** — *model control*: `llama3.1:8b` (cutoff 2023-12) on the **same** 2024-H2 dates; it
+  denies every 2024-H2 fact, so it cannot leak.
+- **C-B** — *time control*: the **same** treatment model on **2026**, i.e. **out-of-distribution
+  (OOD)** — strictly after its knowledge cutoff.
+
+To strip out the 2024-vs-2026 **market-regime confound** we report a **difference-in-differences
+(DiD)** against an identical **no-memory momentum baseline**. Inference uses 3 seeds, a circular
+block bootstrap, permutation tests, and a **pseudo-event null** (98 random dates) for the
+crash-timing score.
 
 ### 3. Results
 
