@@ -1,8 +1,9 @@
 # Look-ahead Leakage in Open-Source LLM Trading Agents: A Forensic Study of Parametric Memory as a Backtest Confound
 
-**Author:** Younghoon Jeon (전영훈) · Korea University AutoAI Lab
-**Course:** Financial AI (final project) · 2026
-**Code:** https://github.com/yhjeon-nxt/finance-ai-lookahead-leakage
+**Author:** Younghoon Jeon (전영훈) · Korea University · BREIN Lab<br>
+**Student ID:** 2025010657<br>
+**Course:** Financial AI (final project) · 2026<br>
+**Code:** <https://github.com/yhjeon-nxt/finance-ai-lookahead-leakage>
 
 ---
 
@@ -26,7 +27,7 @@ period — misreporting their own cutoff and inventing plausible future events w
 rather than cleanly memorising it. We close with concrete robust-backtesting standards for the
 LLM-agent era.
 
-**Headline result.** The central finding is a tight **knowledge↔behaviour match**. On its
+**Headline result.** The central finding is a tight **knowledge–behaviour match**. On its
 in-distribution window the treatment (`qwen3:8b`) **de-risked ahead of the 2024-08-05 crash it
 demonstrably remembers** — its clearest portfolio-level pre-event signal, in the top ~5% of
 random-timing outcomes (pseudo-event p=0.051) — while showing **no** election-timing edge, exactly
@@ -195,7 +196,7 @@ Harris's VP pick, NVIDIA's June-2024 10-for-1 split, the Aug-5 yen-carry selloff
 
 The treatment is selected (by a gated rule: highest 2024-H2 score among candidates that also
 deny 2026 and pass a sanity check; fails loudly otherwise). On the main run we extended the probe
-to 32B candidates — and the "bigger ⇒ knows more" expectation was **empirically refuted**:
+to 32B candidates — and the "bigger → knows more" expectation was **empirically refuted**:
 `qwen2.5:32b` self-reports an *October 2022/2023* cutoff and denies 2024 entirely (older
 knowledge than the 8B), and `qwen3:32b` scored only **1/4** (recalls the NVIDIA split but, by its
 own account, has an ~April/July-2024 cutoff that misses the Aug-5 crash and the election).
@@ -559,7 +560,7 @@ The evidence triangulates:
 
 1. **Financial.** The treatment's edge (Sharpe 1.76) materialises *only* in-distribution — not
    for a different model on the same window, nor for the same model on an unseen window.
-2. **The knowledge↔behaviour match is the strongest signal.** The treatment cut risk before the
+2. **The knowledge–behaviour match is the strongest signal.** The treatment cut risk before the
    Aug-5 crash (pre-event timing +0.115 vs the control's −0.125) — and the probe shows it *knows*
    that crash. It shows *no* election-timing edge — and the probe shows it does *not* know the
    election outcome. The behaviour mirrors the model's measured memory item-by-item; a generic

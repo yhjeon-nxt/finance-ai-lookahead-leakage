@@ -22,5 +22,9 @@ results/raw_llm_outputs/
 results/**/*.jsonl
 results/**/checkpoints/
 
+# Report PDF build (the PDF, pdf.css and build_pdf.sh ARE committed; only the
+# transient pandoc HTML produced if you build in-tree is ignored)
+report/*.html
+
 # OS
 .DS_Store

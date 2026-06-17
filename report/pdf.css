@@ -1,0 +1,88 @@
+/* Stylesheet for compiling research_report.md -> PDF via:
+   pandoc report/research_report.md --pdf-engine=weasyprint -c report/pdf.css ...
+   Academic single-column layout; broad Unicode + Korean (Hangul) font fallback. */
+
+/* Symbol/arrow coverage (↔ → − ≈ ± ≤ ² ¹ ×) is provided by the "DejaVu Sans" family,
+   listed in every font chain *before* the CJK fonts — some CJK fonts expose a blank ↔
+   glyph that would otherwise win per-glyph fallback and render as tofu. */
+
+@page {
+  size: A4;
+  margin: 2cm 2.1cm 1.8cm 2.1cm;
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-size: 8.5pt;
+    color: #999;
+  }
+}
+
+html { font-size: 10.5pt; }
+
+body {
+  /* DejaVu before the CJK fonts: some CJK/symbol fonts expose a blank ↔ glyph that
+     would otherwise win the per-glyph fallback and render as tofu. */
+  font-family: "Charter", "Georgia", "Times New Roman",
+               "DejaVu Sans",
+               "Apple SD Gothic Neo", "Noto Sans CJK KR", serif;
+  line-height: 1.48;
+  color: #1b1b1b;
+  text-align: justify;
+  hyphens: auto;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Helvetica Neue", "Arial",
+               "DejaVu Sans",
+               "Apple SD Gothic Neo", "Noto Sans CJK KR", sans-serif;
+  line-height: 1.22;
+  color: #111;
+  text-align: left;
+}
+h1 { font-size: 1.7em; border-bottom: 2px solid #2f2f2f; padding-bottom: .25em; margin: 0 0 .4em; }
+h2 { font-size: 1.3em; margin-top: 1.3em; border-bottom: 1px solid #cfcfcf; padding-bottom: .18em; }
+h3 { font-size: 1.08em; margin-top: 1.05em; }
+h4 { font-size: 1em; margin-top: .9em; }
+h2, h3, h4 { page-break-after: avoid; }
+
+p { margin: .45em 0; }
+
+a { color: #1a5fb4; text-decoration: none; word-break: break-word; }
+
+code, pre { font-family: "SF Mono", "Menlo", "Consolas", "DejaVu Sans", monospace; }
+code { background: #f3f4f6; padding: .04em .3em; border-radius: 3px; font-size: .86em; }
+pre {
+  background: #f7f8fa; border: 1px solid #e3e6ea; border-radius: 6px;
+  padding: .7em .9em; font-size: .82em; line-height: 1.4;
+  white-space: pre-wrap; overflow-wrap: break-word; page-break-inside: avoid;
+}
+pre code { background: none; padding: 0; }
+
+img { max-width: 100%; height: auto; display: block; margin: .6em auto; page-break-inside: avoid; }
+/* italic paragraph immediately after a figure = caption */
+img + em, p > em:only-child { display: block; }
+
+table {
+  border-collapse: collapse; width: 100%; margin: .7em 0;
+  font-size: .78em; page-break-inside: avoid;
+}
+th, td { border: 1px solid #d2d7dd; padding: .32em .5em; text-align: left; vertical-align: top; }
+th { background: #eef1f4; font-family: "Helvetica Neue", "Arial", sans-serif; }
+tr:nth-child(even) td { background: #fafbfc; }
+
+blockquote {
+  border-left: 3px solid #b8c2cc; margin: .6em 0; padding: .15em .9em;
+  color: #3d4853; background: #fafbfc;
+}
+
+hr { border: none; border-top: 1px solid #dcdcdc; margin: 1.3em 0; }
+
+/* pandoc --toc block */
+nav#TOC, #TOC {
+  font-size: .85em; line-height: 1.35;
+  border: 1px solid #e3e6ea; background: #fafbfc;
+  padding: .6em 1em .6em .4em; border-radius: 6px;
+  margin: .6em 0 1.2em; page-break-after: always;
+}
+nav#TOC ul { list-style: none; padding-left: 1.1em; margin: .2em 0; }
+nav#TOC > ul { padding-left: .4em; }
+nav#TOC a { color: #222; }
