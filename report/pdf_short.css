@@ -1,0 +1,48 @@
+/* Compact stylesheet for the 2-page short report (research_report_short.md).
+   DejaVu Sans sits before the CJK fonts in each chain so symbols (− → etc.) render. */
+
+@page {
+  size: A4;
+  margin: 1.05cm 1.5cm 1.0cm 1.5cm;
+  @bottom-center { content: counter(page) " / " counter(pages); font-size: 7.5pt; color: #aaa; }
+}
+
+/* hide pandoc's metadata title block — the markdown H1 is the visible title */
+header#title-block-header, h1.title { display: none; }
+
+html { font-size: 9.4pt; }
+
+body {
+  font-family: "Charter", "Georgia", "DejaVu Sans",
+               "Apple SD Gothic Neo", "Noto Sans CJK KR", serif;
+  line-height: 1.31;
+  color: #1b1b1b;
+  text-align: justify;
+  hyphens: auto;
+}
+
+h1, h2, h3 {
+  font-family: "Helvetica Neue", "Arial", "DejaVu Sans",
+               "Apple SD Gothic Neo", "Noto Sans CJK KR", sans-serif;
+  color: #111;
+}
+h1 { font-size: 1.42em; line-height: 1.14; margin: 0 0 .15em;
+     border-bottom: 1.5px solid #2f2f2f; padding-bottom: .12em; }
+h3 { font-size: 1em; margin: .55em 0 .12em; page-break-after: avoid; }
+
+p { margin: .3em 0; }
+p:first-of-type { margin-top: .25em; }   /* abstract italic */
+
+a { color: #1a5fb4; text-decoration: none; word-break: break-word; }
+
+code { font-family: "SF Mono", "Menlo", "Consolas", "DejaVu Sans", monospace;
+       font-size: .85em; background: #f3f4f6; padding: .02em .25em; border-radius: 3px; }
+
+img { max-width: 86%; height: auto; display: block; margin: .35em auto; page-break-inside: avoid; }
+
+table { border-collapse: collapse; width: 100%; margin: .45em 0; font-size: .82em;
+        page-break-inside: avoid; }
+th, td { border: 1px solid #d2d7dd; padding: .22em .45em; text-align: left; vertical-align: top; }
+th { background: #eef1f4; font-family: "Helvetica Neue", "Arial", sans-serif; }
+
+hr { display: none; }

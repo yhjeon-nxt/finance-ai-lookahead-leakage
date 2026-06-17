@@ -4,9 +4,11 @@ Final-project experiment for the **Financial AI** seminar (Korea University Auto
 An end-to-end scientific study of **data leakage / look-ahead bias ("cheating")** in
 LLM-based agentic trading systems, executed by an autonomous research agent.
 
-📄 **Full report (PDF):** [`report/research_report.pdf`](report/research_report.pdf) ·
-source: [`report/research_report.md`](report/research_report.md) ·
-rebuild: `bash report/build_pdf.sh`
+📄 **Report (PDF):** [full](report/research_report.pdf) ·
+[2-page short version](report/research_report_short.pdf) ·
+sources: [`research_report.md`](report/research_report.md) /
+[`research_report_short.md`](report/research_report_short.md) ·
+rebuild both: `bash report/build_pdf.sh`
 
 > **One-line thesis.** An open LLM whose pre-training corpus *includes* a historical
 > market window can exhibit statistically anomalous "foresight" when backtested on that
