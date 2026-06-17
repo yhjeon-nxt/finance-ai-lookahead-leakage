@@ -26,17 +26,24 @@ period — misreporting their own cutoff and inventing plausible future events w
 rather than cleanly memorising it. We close with concrete robust-backtesting standards for the
 LLM-agent era.
 
-**Headline result.** On a real run (treatment `qwen3:8b`, control `llama3.1:8b`, executed on an
-EC2 GPU spot instance), the treatment trading its in-distribution window earned **Sharpe 1.76 /
-+25%** versus **0.30** (model control) and **0.49** (same model, out-of-distribution), showed
-positive next-day prescience where the controls showed none, and — most tellingly — **de-risked
-ahead of the 2024-08-05 crash it demonstrably remembers** (its clearest, portfolio-level
-pre-event signal). Around the election it shows no *exposure*-timing edge but a narrower
-*composition* tilt — a significant overweight of the bank winner JPM (§4.8) — even though it
-verbally refuses the election question, i.e. leakage that is behavioural where verbal recall is
-suppressed. The regime-adjusted difference-in-differences is positive on every metric. Support
-for parametric leakage is **moderate and internally consistent**, though statistically modest at
-this sample size (cross-model p≈0.075). **An independent-family co-treatment (`gemma3:12b`,
+**Headline result.** The central finding is a tight **knowledge↔behaviour match**. On its
+in-distribution window the treatment (`qwen3:8b`) **de-risked ahead of the 2024-08-05 crash it
+demonstrably remembers** — its clearest portfolio-level pre-event signal, in the top ~5% of
+random-timing outcomes (pseudo-event p=0.051) — while showing **no** election-timing edge, exactly
+the event the probe shows it does *not* surface. The behaviour mirrors the model's *measured*
+memory item-by-item, which a generic "smarter model" or a regime artifact would not produce. After
+netting out the 2024-vs-2026 market regime against a no-memory momentum baseline, the
+**regime-adjusted difference-in-differences is positive on every metric** (exposure-timing
+DiD +0.136) — and the baseline's own gap is *negative*, so regime works *against* the finding.
+Consistent with this, the treatment also earns a far higher in-distribution **Sharpe (1.76 vs 0.30
+model-control / 0.49 same-model-OOD)**, though we treat Sharpe as descriptive since formal
+inference rests on the timing/DiD metrics. Around the election it adds a narrower *composition*
+tilt — a significant overweight of the bank winner JPM (§4.8) — even though it verbally refuses the
+election question: leakage that is behavioural where verbal recall is suppressed. Support for
+parametric leakage is **moderate and internally consistent** but statistically modest at this
+sample size (cross-model p≈0.075; within-model and per-model effects non-significant), so the
+load-bearing evidence is the *pattern* — knowledge-matched timing, sign-consistent DiD, and the
+cross-model ordering — not any single p-value. **An independent-family co-treatment (`gemma3:12b`,
 official Aug-2024 cutoff) did *not* reproduce the clean signature** — it **confabulates** the
 period (projecting "Joe Biden" as the 2024 winner) rather than recalling it (the pre-registered
 H2). The two-family contrast yields the study's sharpest lesson: **a documented in-window cutoff
@@ -187,7 +194,7 @@ Harris's VP pick, NVIDIA's June-2024 10-for-1 split, the Aug-5 yen-carry selloff
 | phi4               | 0/4            | denies all; self-reports "October 2023" despite a Dec-2024 release                                                                                                                                       |
 
 The treatment is selected (by a gated rule: highest 2024-H2 score among candidates that also
-deny 2026 and pass a sanity check; fails loudly otherwise). On the EC2 run we extended the probe
+deny 2026 and pass a sanity check; fails loudly otherwise). On the main run we extended the probe
 to 32B candidates — and the "bigger ⇒ knows more" expectation was **empirically refuted**:
 `qwen2.5:32b` self-reports an *October 2022/2023* cutoff and denies 2024 entirely (older
 knowledge than the 8B), and `qwen3:32b` scored only **1/4** (recalls the NVIDIA split but, by its
@@ -285,15 +292,11 @@ auto-selection that ignored the OOD-denial gate. The full ledger is in `report/v
 This verification step is itself part of the contribution: LLM-agent experiments are easy to get
 subtly wrong, and adversarial pre-registration of the analysis materially hardened the conclusions.
 
-### 3.10 Infrastructure & cost
+### 3.10 Execution
 
-Developed and smoke-tested locally (Apple-Silicon ollama), then executed on **one
-`g6e.xlarge` spot** instance (L40S 48 GB, ap-northeast-2, ≈$0.54/hr). Data prepared locally and
-staged to S3 so the instance does no yfinance I/O; a resumable decision cache (keyed by
-group·model·window·seed·date) makes spot interruption cost ≤ one decision; logs/equity/raw
-outputs stream to `s3://neuroxt-personal/yhjeon/finance-ai-leakage/` every 30–60 s; the
-instance self-terminates on completion. The main qwen3 run cost **< $1**; **total across all
-runs** (incl. the final 7-instance 32B+8B parallel fleet) **≈ $17** (Appendix A).
+Models were run with `ollama` — developed and smoke-tested locally (Apple-Silicon), then on a
+rented GPU instance for the full runs (3 seeds per cell, with a resumable decision cache so a run
+is idempotent under interruption). Hardware, region, artifact handling, and cost are in Appendix A.
 
 ### 3.11 Pivots from the baseline prompt
 
@@ -306,8 +309,8 @@ post-cutoff data now exists). Each is documented here and in `findings.md`.
 
 ## 4. Empirical Results
 
-Run on a single `g6e.xlarge` spot instance (Seoul), 3 groups × 3 seeds, treatment auto-selected
-as `qwen3:8b` (the highest verified 2024-H2 recall; the 32B candidates scored *lower* — §3.4).
+3 groups × 3 seeds; the treatment was auto-selected as `qwen3:8b` (the highest verified 2024-H2
+recall — the 32B candidates scored *lower*, §3.4).
 
 ![Equity by calendar date](figures/equity_ec2_bydate.png)
 
@@ -496,14 +499,14 @@ for parametric leakage — what matters is whether the model *genuinely recalls*
 therefore **model-specific, not a mechanical consequence of the cutoff date** — which makes
 per-model probing (not model-card cutoffs) the operative safeguard.
 
-### 4.10 Per-model in-vs-out across two size tiers (8 models, EC2 fleet)
+### 4.10 Per-model in-vs-out across two size tiers (8 models)
 
 The cleanest within-model test holds the backbone fixed and varies only the *traded year* between
 one **inside** the model's training cutoff and one **after** it. We ran it for **eight models —
 four small (≈8–12B) and four large (≈24–32B)** — on the **identical enriched price-only context**
 (§3.6, augmented with multi-horizon momentum, drawdown-from-high, distance-from-MA and a
-vol-regime flag), 3 seeds, on a 7-instance EC2 spot fleet, with a no-memory momentum baseline for
-the regime-adjusted DiD (circular block bootstrap, footnote ¹).
+vol-regime flag), 3 seeds, with a no-memory momentum baseline for the regime-adjusted DiD
+(circular block bootstrap, footnote ¹).
 
 | Family  | Model                | tier | IN/OUT    | Sharpe IN | Sharpe OUT | **DiD**    | p¹            |
 | ------- | -------------------- | ---- | --------- | --------- | ---------- | ---------------- | -------------- |
@@ -656,7 +659,7 @@ Run the full pipeline via `infra/stage.sh` + `infra/launch_spot.sh`, or locally 
 - **Windows:** main run — in-dist 2024-07-01…12-31, OOD 2026-01-01…05-31. Per-model sweep (§4.10)
   — full calendar years 2023 / 2024 / 2025 and 2026-01…06, paired per model (IN inside cutoff,
   OUT after). Prices via `yfinance` (auto-adjusted), cached to parquet (needs `pyarrow`).
-- **Infra:** 1× `g6e.xlarge` spot (ap-northeast-2), DL Base GPU AMI, IAM instance profile with S3
+- **Infra:** 1× `g6e.xlarge` spot (L40S 48 GB, ap-northeast-2, ≈$0.54/hr), DL Base GPU AMI, IAM instance profile with S3
   + SSM, `instance-initiated-shutdown-behavior=terminate` + EXIT-trap self-terminate; artifacts to
     `s3://neuroxt-personal/yhjeon/finance-ai-leakage/`. Total compute cost ≈ $17 across all EC2 spot runs (qwen3 main ≈ $0.8 incl. 3 aborted boots
     that each self-terminated cleanly; Gemma co-treatment ≈ $0.6; the 8-model two-tier size sweep on a 7-instance spot fleet (§4.10) ≈ $15.5).
